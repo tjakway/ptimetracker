@@ -4,6 +4,10 @@
 #include <regex>
 #include <string>
 
+#include <sys/types.h> //for pid_t
+
+namespace ptimetracker {
+
 class ProcMatcher
 {
     const std::regex cwdRegex, procRegex;
@@ -15,6 +19,16 @@ public:
         {}
 };
 
+class Proc {
+    pid_t pid;
+public:
+    Proc(pid_t pid)
+        : pid(pid)
+        {}
+};
 
+
+
+}
 
 #endif
