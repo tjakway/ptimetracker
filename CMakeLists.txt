@@ -8,8 +8,8 @@ set(MAIN_TARGET_LIB ptimetrackerlib)
 
 set(CMAKE_C_STANDARD 11)
 set(PTIMETRACKER_SRCS_NOT_MAIN src/exec-notify.c)
-set(PTIMETRACKER_SRCS ${PTIMETRACKER_SRCS_NOT_MAIN} src/main.cpp)
-set(PTIMETRACKER_MAIN_SRC src/main.cpp)
+set(PTIMETRACKER_SRCS ${PTIMETRACKER_SRCS_NOT_MAIN} src/main.c)
+set(PTIMETRACKER_MAIN_SRC src/main.c)
 #set(PTIMETRACKER_TEST_SRCS test/2080_test.c)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
