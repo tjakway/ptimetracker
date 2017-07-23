@@ -10,13 +10,25 @@ namespace ptimetracker {
 
 class ProcMatcher
 {
-    const std::regex cwdRegex, procRegex;
+    /**
+     * cwdRegex is optional
+     */
+    const std::regex procRegex, cwdRegex;
     const bool matchOnlyProgName;
 
 public:
-    ProcMatcher(std::regex cwdRegex, std::regex procRegex, bool matchOnlyProgName)
+    ProcMatcher(std::regex procRegex, bool matchOnlyProgName, std::regex cwdRegex)
         : cwdRegex(cwdRegex), procRegex(procRegex), matchOnlyProgName(matchOnlyProgName)
         {}
+
+    ProcMatcher(std::regex procRegex, bool matchOnlyProgName)
+        : procRegex(procRegex), matchOnlyProgName(matchOnlyProgName), cwdRegex()
+        {}
+
+    /**
+     * ought to be read lazily
+     */
+    bool matches(pid_t);
 };
 
 
