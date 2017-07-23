@@ -3,12 +3,12 @@ cmake_minimum_required(VERSION 2.8.11)
 project(PTIMETRACKER)
 
 set(MAIN_TARGET ptimetracker)
-set(TEST_TARGET test_ptimetracker)
+#set(TEST_TARGET test_ptimetracker)
 
 set(CMAKE_C_STANDARD 11)
 set(PTIMETRACKER_SRCS_NOT_MAIN src/exec-notify.c)
-set(PTIMETRACKER_SRCS ${PTIMETRACKER_SRCS_NOT_MAIN} src/main.c)
-set(PTIMETRACKER_TEST_SRCS test/2080_test.c)
+set(PTIMETRACKER_SRCS ${PTIMETRACKER_SRCS_NOT_MAIN} src/main.cpp)
+#set(PTIMETRACKER_TEST_SRCS test/2080_test.c)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
