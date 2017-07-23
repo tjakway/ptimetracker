@@ -198,7 +198,3 @@ close_and_exit:
 	close(sk_nl);
 	return rc;
 }
-
-int main(int argc, char **argv)
-{
-}
