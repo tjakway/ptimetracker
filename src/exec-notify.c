@@ -96,7 +96,8 @@ void handle_msg (struct cn_msg *cn_hdr)
 	}
 }
 
-void register_proc_msg_handler((void) (*handler)(struct cn_msg*))
+int register_proc_msg_handler(void (*handler)(struct cn_msg*)) 
+{
 	int sk_nl;
 	int err;
 	struct sockaddr_nl my_nla, kern_nla, from_nla;
@@ -188,7 +189,7 @@ void register_proc_msg_handler((void) (*handler)(struct cn_msg*))
 			    (nlh->nlmsg_type == NLMSG_OVERRUN))
 				break;
                         //invoke the callback
-			handler(cn_hdr);
+			(*handler)(cn_hdr);
 			if (nlh->nlmsg_type == NLMSG_DONE)
 				break;
 			nlh = NLMSG_NEXT(nlh, recv_len);
