@@ -30,37 +30,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-
-#include <sys/socket.h>
-#include <sys/types.h>
-
-#include <linux/connector.h>
-#include <linux/netlink.h>
-#include <linux/cn_proc.h>
-
-#define SEND_MESSAGE_LEN (NLMSG_LENGTH(sizeof(struct cn_msg) + \
-				       sizeof(enum proc_cn_mcast_op)))
-#define RECV_MESSAGE_LEN (NLMSG_LENGTH(sizeof(struct cn_msg) + \
-				       sizeof(struct proc_event)))
-
-#define SEND_MESSAGE_SIZE    (NLMSG_SPACE(SEND_MESSAGE_LEN))
-#define RECV_MESSAGE_SIZE    (NLMSG_SPACE(RECV_MESSAGE_LEN))
-
-#define max(x,y) ((y)<(x)?(x):(y))
-#define min(x,y) ((y)>(x)?(x):(y))
-
-#define BUFF_SIZE (max(max(SEND_MESSAGE_SIZE, RECV_MESSAGE_SIZE), 1024))
-#define MIN_RECV_SIZE (min(SEND_MESSAGE_SIZE, RECV_MESSAGE_SIZE))
-
-#define PROC_CN_MCAST_LISTEN (1)
-#define PROC_CN_MCAST_IGNORE (2)
-
+#include "exec-notify.h"
 
 void handle_msg (struct cn_msg *cn_hdr)
 {
@@ -126,9 +96,7 @@ void handle_msg (struct cn_msg *cn_hdr)
 	}
 }
 
-
-int main(int argc, char **argv)
-{
+void register_proc_msg_handler((void) (*handler)(struct cn_msg*))
 	int sk_nl;
 	int err;
 	struct sockaddr_nl my_nla, kern_nla, from_nla;
@@ -143,8 +111,6 @@ int main(int argc, char **argv)
 		printf("Only root can start/stop the fork connector\n");
 		return 0;
 	}
-	if (argc != 1)
-		return 0;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 
@@ -221,7 +187,8 @@ int main(int argc, char **argv)
 			if ((nlh->nlmsg_type == NLMSG_ERROR) ||
 			    (nlh->nlmsg_type == NLMSG_OVERRUN))
 				break;
-			handle_msg(cn_hdr);
+                        //invoke the callback
+			handler(cn_hdr);
 			if (nlh->nlmsg_type == NLMSG_DONE)
 				break;
 			nlh = NLMSG_NEXT(nlh, recv_len);
@@ -229,7 +196,9 @@ int main(int argc, char **argv)
 	}
 close_and_exit:
 	close(sk_nl);
-	exit(rc);
+	return rc;
+}
 
-	return 0;
+int main(int argc, char **argv)
+{
 }
