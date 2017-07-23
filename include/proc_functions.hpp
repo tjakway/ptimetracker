@@ -19,15 +19,6 @@ public:
         {}
 };
 
-class Proc {
-    pid_t pid;
-public:
-    Proc(pid_t pid)
-        : pid(pid)
-        {}
-};
-
-
 
 }
 
