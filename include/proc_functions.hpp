@@ -2,7 +2,7 @@
 #define PROC_FUNCTIONS_HPP
 
 #include <regex>
-#include <string>
+#include <memory>
 
 #include <sys/types.h> //for pid_t
 
@@ -11,28 +11,20 @@ namespace ptimetracker {
 /**
  * contains all the data to match one process
  */
+    //TODO: add a function pointer callback so we can pass a Haskell function that's called whenever it matches
 class ProcMatcher
 {
     /**
      * cwdRegex is optional
      */
-    const std::regex procRegex, cwdRegex;
+    std::unique_ptr<std::regex> procRegex, cwdRegex;
     const bool matchOnlyProgName;
 
+    bool procMatches(pid_t);
+    bool cwdMatches(pid_t);
+
 public:
-    ProcMatcher(std::regex procRegex, bool matchOnlyProgName, std::regex cwdRegex)
-        : cwdRegex(cwdRegex), procRegex(procRegex), matchOnlyProgName(matchOnlyProgName)
-        {}
-
-    ProcMatcher(std::regex procRegex, bool matchOnlyProgName)
-        : procRegex(procRegex), matchOnlyProgName(matchOnlyProgName), cwdRegex()
-        {}
-
-    ProcMatcher(const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
-        : procRegex(std::regex(procRegexStr)), 
-            matchOnlyProgName(matchOnlyProgName),
-            cwdRegex(std::regex(cwdRegexStr))
-        {}
+    ProcMatcher(const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
 
     bool matches(pid_t);
 };

@@ -48,11 +48,52 @@ namespace {
 }
 
 namespace ptimetracker {
+    ProcMatcher::ProcMatcher(const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
+        : matchOnlyProgName(matchOnlyProgName)
+    {
+        if(procRegexStr != nullptr) {
+            procRegex = std::make_unique<std::regex>(procRegexStr);
+        }
+
+        if(cwdRegexStr != nullptr) {
+            cwdRegex = std::make_unique<std::regex(cwdRegexStr);
+        }
+    }
+
+    bool ProcMatcher::procMatches(pid_t pid)
+    {
+        if(procRegex.get() == nullptr) {
+            return true;
+        }
+        else {
+            //check whether we're testing just the program name or the entire invocation
+            if(matchOnlyProgName) {
+                return std::regex_match(ProcInfo::readProcName(pid), procRegex);
+            }
+            else {
+                return std::regex_match(ProcInfo::readCmdLine(pid), procRegex);
+            }
+        }
+    }
+
+    bool ProcMatcher::cwdMatches(pid_t pid)
+    {
+        if(cwdRegex.get() == nulltr) {
+            return true;
+        }
+        else {
+            return std::regex_match(ProcInfo::readCwd(pid), cwdRegex);
+        }
+    }
+
+
 
     //TODO: define matches()
     //TODO: write static function to read relevant /proc/ info
     //probably read /proc/<pid>/stat (the file used by ps)
 
-
+    bool ProcMatcher::matches(pid_t pid)
+    {
+    }
 }
 
