@@ -28,6 +28,12 @@ public:
         : procRegex(procRegex), matchOnlyProgName(matchOnlyProgName), cwdRegex()
         {}
 
+    ProcMatcher(const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
+        : procRegex(std::regex(procRegexStr)), 
+            matchOnlyProgName(matchOnlyProgName),
+            cwdRegex(std::regex(cwdRegexStr))
+        {}
+
     /**
      * ought to be read lazily
      */

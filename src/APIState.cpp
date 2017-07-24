@@ -12,9 +12,14 @@ public:
     std::vector<ProcMatcher> regexes;
 };
 
-extern "C" {
-    //TODO: add an error pointer? (char**)
-    void addProcMatcher(void* state, )
 }
 
+extern "C" {
+    //TODO: add an error pointer? (char**)
+    //TODO: will bool behave properly in C?  don't need to include <stdbool.h>?
+    void addProcMatcher(void* state, const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr) 
+    {
+        ptimetracker::APIState* s = (ptimetracker::APIState*)state;
+        s->regexes.emplace_back(procRegexStr, matchOnlyProgName, cwdRegexStr);
+    }
 }

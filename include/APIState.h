@@ -11,4 +11,8 @@ class APIState;
 
 }
 
+extern "C" {
+    void addProcMatcher(void* state, const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
+}
+
 #endif
