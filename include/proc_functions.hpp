@@ -8,6 +8,9 @@
 
 namespace ptimetracker {
 
+/**
+ * contains all the data to match one process
+ */
 class ProcMatcher
 {
     /**
@@ -30,7 +33,6 @@ public:
      */
     bool matches(pid_t);
 };
-
 
 }
 

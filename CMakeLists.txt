@@ -12,7 +12,7 @@ set(MAIN_TARGET_LIB ptimetrackerlib)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 
-set(PTIMETRACKER_SRCS_NOT_MAIN src/exec-notify.c src/proc_functions.cpp)
+set(PTIMETRACKER_SRCS_NOT_MAIN src/exec-notify.c src/proc_functions.cpp src/APIState.cpp)
 set(PTIMETRACKER_SRCS ${PTIMETRACKER_SRCS_NOT_MAIN} src/main.c)
 set(PTIMETRACKER_MAIN_SRC src/main.c)
 #set(PTIMETRACKER_TEST_SRCS test/2080_test.c)
