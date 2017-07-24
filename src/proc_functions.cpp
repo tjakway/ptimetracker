@@ -37,6 +37,7 @@ namespace {
     //see https://stackoverflow.com/questions/6159665/a-standard-way-in-c-to-define-an-exception-class-and-to-throw-exceptions
     class RealpathException : public std::runtime_error
     {
+    public:
         RealpathException(std::string const& message)
             : std::runtime_error(message + " Was thrown")
         {}
@@ -44,7 +45,7 @@ namespace {
 
     class ProcInfo 
     {
-        void checkRealpathErrno(char* allocedPath) {
+        static void checkRealpathErrno(char* allocedPath) {
             if(allocedPath == nullptr) {
                 //there's an error, find out what it is
                 //don't just check errno because it might have been set from a previous call
