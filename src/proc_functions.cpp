@@ -157,9 +157,9 @@ namespace ptimetracker {
     }
 
     /**
-     * returns the pointer to cached PID state so it can be threaded across multiple calls
+     * optionally takes a pointer to cache state
      */
-    ProcInfo* ProcMatcher::execMatch(pid_t pid, ProcInfo* info)
+    void ProcMatcher::execMatch(pid_t pid, ProcInfo* info = nullptr)
     {
         if(matches(pid, info)) {
             callback(pid);

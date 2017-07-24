@@ -35,7 +35,7 @@ public:
     /**
      * runs the saved callback if it matches this PID
      */
-    ProcInfo* execMatch(pid_t, ProcInfo*);
+    void execMatch(pid_t, ProcInfo* info = nullptr);
 };
 
 }

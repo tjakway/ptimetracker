@@ -28,8 +28,11 @@ extern "C" {
     {
         ptimetracker::APIState* s = (ptimetracker::APIState*)state;
 
-        //test every regex against the PID
-        std::for_each(s->regexes.begin(), s->regexes.end(), 
-                [pid](ptimetracker::ProcMatcher& m){ m.execMatch(pid); });
+        //only cache values across one call, both to not waste space and because it's very unlikely the kernel will recycle PIDs
+        ProcInfo info;
+
+        for(ProcMatcher& m : s->regexes) {
+            m.execMatch(pid, &info);
+        }
     }
 }
