@@ -5,7 +5,7 @@ project(PTIMETRACKER)
 
 
 set(MAIN_TARGET ptimetracker)
-set(MAIN_TARGET_LIB ptimetrackerlib)
+set(MAIN_TARGET_LIB timetracker)
 #set(TEST_TARGET test_ptimetracker)
 
 #see https://stackoverflow.com/questions/10851247/how-to-activate-c-11-in-cmake
