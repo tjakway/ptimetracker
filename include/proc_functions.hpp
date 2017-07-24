@@ -8,6 +8,8 @@
 
 namespace ptimetracker {
 
+class ProcInfo;
+
 /**
  * contains all the data to match one process
  */

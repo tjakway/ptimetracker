@@ -35,7 +35,7 @@ namespace {
     std::string getCwd()
     {
         const long size = pathconf(".", _PC_PATH_MAX);
-        const char* cwd = new char[size];
+        char* cwd = new char[size];
 
         const char* ret = getcwd(cwd, (size_t)size);
 
@@ -68,6 +68,7 @@ TEST(pTimeTrackerTests, testCwd)
 
         ASSERT_TRUE(dirExists(childCwd));
         ASSERT_TRUE(childCwd == getCwd());
+        ASSERT_TRUE(childCwd == ProcInfo::readCwd(getpid()));
 
         //signal the child process to continue
         //it will exit normally
