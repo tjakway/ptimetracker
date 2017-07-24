@@ -34,9 +34,6 @@ public:
             cwdRegex(std::regex(cwdRegexStr))
         {}
 
-    /**
-     * ought to be read lazily
-     */
     bool matches(pid_t);
 };
 
