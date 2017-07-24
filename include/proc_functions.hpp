@@ -23,10 +23,17 @@ class ProcMatcher
     bool procMatches(pid_t);
     bool cwdMatches(pid_t);
 
-public:
-    ProcMatcher(const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
+    const void (*callback)(int);
 
     bool matches(pid_t);
+
+public:
+    ProcMatcher(const void (*callback)(int), const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
+
+    /**
+     * runs the saved callback if it matches this PID
+     */
+    void execMatch(pid_t);
 };
 
 }

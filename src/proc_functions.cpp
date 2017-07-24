@@ -80,8 +80,8 @@ namespace {
 }
 
 namespace ptimetracker {
-    ProcMatcher::ProcMatcher(const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
-        : matchOnlyProgName(matchOnlyProgName)
+    ProcMatcher::ProcMatcher(const void (*callback)(int), const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
+        : callback(callback), matchOnlyProgName(matchOnlyProgName)
     {
         if(procRegexStr != nullptr) {
             procRegex = make_unique<std::regex>(procRegexStr);
@@ -122,6 +122,13 @@ namespace ptimetracker {
     bool ProcMatcher::matches(pid_t pid)
     {
         return procMatches(pid) && cwdMatches(pid);
+    }
+
+    void ProcMatcher::execMatch(pid_t pid)
+    {
+        if(matches(pid)) {
+            callback(pid);
+        }
     }
 }
 
