@@ -78,7 +78,7 @@ namespace ptimetracker {
 
     bool ProcMatcher::cwdMatches(pid_t pid)
     {
-        if(cwdRegex.get() == nulltr) {
+        if(cwdRegex.get() == nullptr) {
             return true;
         }
         else {
