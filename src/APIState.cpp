@@ -29,9 +29,9 @@ extern "C" {
         ptimetracker::APIState* s = (ptimetracker::APIState*)state;
 
         //only cache values across one call, both to not waste space and because it's very unlikely the kernel will recycle PIDs
-        ProcInfo info;
+        ptimetracker::ProcInfo info;
 
-        for(ProcMatcher& m : s->regexes) {
+        for(ptimetracker::ProcMatcher& m : s->regexes) {
             m.execMatch(pid, &info);
         }
     }

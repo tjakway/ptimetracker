@@ -43,72 +43,6 @@ namespace {
         {}
     };
 
-    class ProcInfo 
-    {
-        static void checkRealpathErrno(char* allocedPath) {
-            if(allocedPath == nullptr) {
-                //there's an error, find out what it is
-                //don't just check errno because it might have been set from a previous call
-
-                throw RealpathException(std::string(strerror(errno)));
-            }
-        }
-    public:
-        static std::string readCmdLine(pid_t pid, ProcInfo* info = nullptr)
-        {
-            if(info != nullptr && info->cmdLine.get() != nullptr) {
-                return info->cmdLine;
-            }
-
-            std::string cmdLine = readFile("/proc/" + std::to_string(pid) + "/cmdline");
-
-            if(info != nullptr) {
-                info->cmdLine = new std::string(cmdLine);
-            }
-
-            return cmdLine;
-        }
-        static std::string readProcName(pid_t pid, ProcInfo* info = nullptr)
-        {
-            //check cache
-            if(info != nullptr && info->procName.get() != nullptr) {
-                return info->procName;
-            }
-
-            std::string procName = readFile("/proc/" + std::to_string(pid) + "/comm");
-
-            if(info != nullptr) {
-                info->procName = new std::string(procName);
-            }
-
-            return procName;
-        }
-        static std::string readCwd(pid_t pid, ProcInfo* info = nullptr)
-        {
-            //check cache
-            if(info != nullptr && info->cwd.get() != nullptr) {
-                return info->cwd;
-            }
-
-            //use realpath to read the destination of the symlink as an absolute path
-            std::string cwdPath = "/proc/" + std::to_string(pid) + "/cwd";
-
-            char* allocedPath = realpath(cwdPath.c_str(), nullptr);
-            checkRealpathErrno(allocedPath);
-
-            std::string absCwd = allocedPath;
-
-            if(info != nullptr) {
-                info->cwd = new std::string(absCwd);
-            }
-
-            //realpath will allocate a c string when the 2nd arg is NULL
-            free(allocedPath);
-            return absCwd;
-        }
-
-        std::unique_ptr<std::string> cmdLine, procName, cwd;
-    };
 }
 
 namespace ptimetracker {
@@ -124,7 +58,7 @@ namespace ptimetracker {
         }
     }
 
-    bool ProcMatcher::procMatches(pid_t pid)
+    bool ProcMatcher::procMatches(pid_t pid, ProcInfo* info)
     {
         if(procRegex.get() == nullptr) {
             return true;
@@ -159,12 +93,77 @@ namespace ptimetracker {
     /**
      * optionally takes a pointer to cache state
      */
-    void ProcMatcher::execMatch(pid_t pid, ProcInfo* info = nullptr)
+    void ProcMatcher::execMatch(pid_t pid, ProcInfo* info)
     {
         if(matches(pid, info)) {
             callback(pid);
         }
-        return info;
     }
+
+
+    void ProcInfo::checkRealpathErrno(char* allocedPath) {
+        if(allocedPath == nullptr) {
+            //there's an error, find out what it is
+            //don't just check errno because it might have been set from a previous call
+
+            throw RealpathException(std::string(strerror(errno)));
+        }
+    }
+
+    std::string ProcInfo::readCmdLine(pid_t pid, ProcInfo* info)
+    {
+        if(info != nullptr && info->cmdLine.get() != nullptr) {
+            return *info->cmdLine;
+        }
+
+        std::string cmdLine = readFile("/proc/" + std::to_string(pid) + "/cmdline");
+
+        if(info != nullptr) {
+            info->cmdLine = std::unique_ptr<std::string>(new std::string(cmdLine));
+        }
+
+        return cmdLine;
+    }
+
+    std::string ProcInfo::readProcName(pid_t pid, ProcInfo* info)
+    {
+        //check cache
+        if(info != nullptr && info->procName.get() != nullptr) {
+            return *info->procName;
+        }
+
+        std::string procName = readFile("/proc/" + std::to_string(pid) + "/comm");
+
+        if(info != nullptr) {
+            info->procName = std::unique_ptr<std::string>(new std::string(procName));
+        }
+
+        return procName;
+    }
+
+    std::string ProcInfo::readCwd(pid_t pid, ProcInfo* info)
+    {
+        //check cache
+        if(info != nullptr && info->cwd.get() != nullptr) {
+            return *info->cwd;
+        }
+
+        //use realpath to read the destination of the symlink as an absolute path
+        std::string cwdPath = "/proc/" + std::to_string(pid) + "/cwd";
+
+        char* allocedPath = realpath(cwdPath.c_str(), nullptr);
+        checkRealpathErrno(allocedPath);
+
+        std::string absCwd = allocedPath;
+
+        if(info != nullptr) {
+            info->cwd = std::unique_ptr<std::string>(new std::string(absCwd));
+        }
+
+        //realpath will allocate a c string when the 2nd arg is NULL
+        free(allocedPath);
+        return absCwd;
+    }
+
 }
 

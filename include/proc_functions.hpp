@@ -38,6 +38,19 @@ public:
     void execMatch(pid_t, ProcInfo* info = nullptr);
 };
 
+
+class ProcInfo 
+{
+    static void checkRealpathErrno(char* allocedPath);
+public:
+    static std::string readCmdLine(pid_t pid, ProcInfo* info = nullptr);
+    static std::string readProcName(pid_t pid, ProcInfo* info = nullptr);
+    static std::string readCwd(pid_t pid, ProcInfo* info = nullptr);
+
+    std::unique_ptr<std::string> cmdLine, procName, cwd;
+};
+
+
 }
 
 #endif
