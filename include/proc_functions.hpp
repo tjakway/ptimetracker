@@ -8,6 +8,8 @@
 
 namespace ptimetracker {
 
+class ProcInfo;
+
 /**
  * contains all the data to match one process
  */
@@ -20,12 +22,12 @@ class ProcMatcher
     std::unique_ptr<std::regex> procRegex, cwdRegex;
     const bool matchOnlyProgName;
 
-    bool procMatches(pid_t);
-    bool cwdMatches(pid_t);
+    bool procMatches(pid_t, ProcInfo*);
+    bool cwdMatches(pid_t, ProcInfo*);
 
     const void (*callback)(int);
 
-    bool matches(pid_t);
+    bool matches(pid_t, ProcInfo*);
 
 public:
     ProcMatcher(const void (*callback)(int), const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
@@ -33,7 +35,7 @@ public:
     /**
      * runs the saved callback if it matches this PID
      */
-    void execMatch(pid_t);
+    ProcInfo* execMatch(pid_t, ProcInfo*);
 };
 
 }

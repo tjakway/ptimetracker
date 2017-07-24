@@ -54,16 +54,42 @@ namespace {
             }
         }
     public:
-        static std::string readCmdLine(pid_t pid)
+        static std::string readCmdLine(pid_t pid, ProcInfo* info = nullptr)
         {
-            return readFile("/proc/" + std::to_string(pid) + "/cmdline");
+            if(info != nullptr && info->cmdLine.get() != nullptr) {
+                return info->cmdLine;
+            }
+
+            std::string cmdLine = readFile("/proc/" + std::to_string(pid) + "/cmdline");
+
+            if(info != nullptr) {
+                info->cmdLine = new std::string(cmdLine);
+            }
+
+            return cmdLine;
         }
-        static std::string readProcName(pid_t pid)
+        static std::string readProcName(pid_t pid, ProcInfo* info = nullptr)
         {
-            return readFile("/proc/" + std::to_string(pid) + "/comm");
+            //check cache
+            if(info != nullptr && info->procName.get() != nullptr) {
+                return info->procName;
+            }
+
+            std::string procName = readFile("/proc/" + std::to_string(pid) + "/comm");
+
+            if(info != nullptr) {
+                info->procName = new std::string(procName);
+            }
+
+            return procName;
         }
-        static std::string readCwd(pid_t pid)
+        static std::string readCwd(pid_t pid, ProcInfo* info = nullptr)
         {
+            //check cache
+            if(info != nullptr && info->cwd.get() != nullptr) {
+                return info->cwd;
+            }
+
             //use realpath to read the destination of the symlink as an absolute path
             std::string cwdPath = "/proc/" + std::to_string(pid) + "/cwd";
 
@@ -72,10 +98,16 @@ namespace {
 
             std::string absCwd = allocedPath;
 
+            if(info != nullptr) {
+                info->cwd = new std::string(absCwd);
+            }
+
             //realpath will allocate a c string when the 2nd arg is NULL
             free(allocedPath);
             return absCwd;
         }
+
+        std::unique_ptr<std::string> cmdLine, procName, cwd;
     };
 }
 
@@ -108,7 +140,7 @@ namespace ptimetracker {
         }
     }
 
-    bool ProcMatcher::cwdMatches(pid_t pid)
+    bool ProcMatcher::cwdMatches(pid_t pid, ProcInfo* info)
     {
         if(cwdRegex.get() == nullptr) {
             return true;
@@ -119,16 +151,20 @@ namespace ptimetracker {
     }
 
 
-    bool ProcMatcher::matches(pid_t pid)
+    bool ProcMatcher::matches(pid_t pid, ProcInfo* info)
     {
-        return procMatches(pid) && cwdMatches(pid);
+        return procMatches(pid, info) && cwdMatches(pid, info);
     }
 
-    void ProcMatcher::execMatch(pid_t pid)
+    /**
+     * returns the pointer to cached PID state so it can be threaded across multiple calls
+     */
+    ProcInfo* ProcMatcher::execMatch(pid_t pid, ProcInfo* info)
     {
-        if(matches(pid)) {
+        if(matches(pid, info)) {
             callback(pid);
         }
+        return info;
     }
 }
 
