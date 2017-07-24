@@ -27,7 +27,8 @@ extern "C" {
     void execMatches(void* state, pid_t pid) 
     {
         ptimetracker::APIState* s = (ptimetracker::APIState*)state;
-        //todo: foreach, s->execMatch
+
+        //test every regex against the PID
         std::for_each(s->regexes.begin(), s->regexes.end(), 
                 [pid](ptimetracker::ProcMatcher& m){ m.execMatch(pid); });
     }
