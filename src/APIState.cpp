@@ -2,6 +2,7 @@
 
 #include "proc_functions.hpp"
 #include <vector>
+#include <algorithm>
 
 namespace ptimetracker {
 
@@ -23,9 +24,11 @@ extern "C" {
         s->regexes.emplace_back(callback, procRegexStr, matchOnlyProgName, cwdRegexStr);
     }
 
-    void execMatches(void* state, pid_t pid)
+    void execMatches(void* state, pid_t pid) 
     {
         ptimetracker::APIState* s = (ptimetracker::APIState*)state;
         //todo: foreach, s->execMatch
+        std::for_each(s->regexes.begin(), s->regexes.end(), 
+                [pid](ptimetracker::ProcMatcher& m){ m.execMatch(pid); });
     }
 }
