@@ -5,6 +5,17 @@
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
+#include <regex>
+#include <memory>
+
+/**
+ * see https://stackoverflow.com/questions/12580432/why-does-c11-have-make-shared-but-not-make-unique
+ */
+template<typename T, typename ...Args>
+std::unique_ptr<T> make_unique( Args&& ...args )
+{
+    return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
+}
 
 namespace {
     std::string readFile(std::string inFileName)
@@ -23,6 +34,7 @@ namespace {
 
     class ProcInfo 
     {
+    public:
         static std::string readCmdLine(pid_t pid)
         {
             return readFile("/proc/" + std::to_string(pid) + "/cmdline");
@@ -52,11 +64,11 @@ namespace ptimetracker {
         : matchOnlyProgName(matchOnlyProgName)
     {
         if(procRegexStr != nullptr) {
-            procRegex = std::make_unique<std::regex>(procRegexStr);
+            procRegex = make_unique<std::regex>(procRegexStr);
         }
 
         if(cwdRegexStr != nullptr) {
-            cwdRegex = std::make_unique<std::regex(cwdRegexStr);
+            cwdRegex = make_unique<std::regex>(cwdRegexStr);
         }
     }
 
@@ -68,10 +80,10 @@ namespace ptimetracker {
         else {
             //check whether we're testing just the program name or the entire invocation
             if(matchOnlyProgName) {
-                return std::regex_match(ProcInfo::readProcName(pid), procRegex);
+                return std::regex_match(ProcInfo::readProcName(pid), *procRegex);
             }
             else {
-                return std::regex_match(ProcInfo::readCmdLine(pid), procRegex);
+                return std::regex_match(ProcInfo::readCmdLine(pid), *procRegex);
             }
         }
     }
@@ -82,18 +94,14 @@ namespace ptimetracker {
             return true;
         }
         else {
-            return std::regex_match(ProcInfo::readCwd(pid), cwdRegex);
+            return std::regex_match(ProcInfo::readCwd(pid), *cwdRegex);
         }
     }
 
 
-
-    //TODO: define matches()
-    //TODO: write static function to read relevant /proc/ info
-    //probably read /proc/<pid>/stat (the file used by ps)
-
     bool ProcMatcher::matches(pid_t pid)
     {
+        return procMatches(pid) && cwdMatches(pid);
     }
 }
 
