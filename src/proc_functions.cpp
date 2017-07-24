@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <regex>
 #include <memory>
+#include <stdexcept>
+#include <errno.h>
 
 /**
  * see https://stackoverflow.com/questions/12580432/why-does-c11-have-make-shared-but-not-make-unique
@@ -32,8 +34,24 @@ namespace {
         //destructor will close the file
     }
 
+    //see https://stackoverflow.com/questions/6159665/a-standard-way-in-c-to-define-an-exception-class-and-to-throw-exceptions
+    class RealpathException : public std::runtime_error
+    {
+        RealpathException(std::string const& message)
+            : std::runtime_error(message + " Was thrown")
+        {}
+    };
+
     class ProcInfo 
     {
+        void checkRealpathErrno(char* allocedPath) {
+            if(allocedPath == nullptr) {
+                //there's an error, find out what it is
+                //don't just check errno because it might have been set from a previous call
+
+                throw RealpathException(std::string(strerror(errno)));
+            }
+        }
     public:
         static std::string readCmdLine(pid_t pid)
         {
@@ -49,6 +67,7 @@ namespace {
             std::string cwdPath = "/proc/" + std::to_string(pid) + "/cwd";
 
             char* allocedPath = realpath(cwdPath.c_str(), nullptr);
+            checkRealpathErrno(allocedPath);
 
             std::string absCwd = allocedPath;
 
