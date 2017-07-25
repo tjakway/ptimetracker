@@ -35,4 +35,17 @@ extern "C" {
             m.execMatch(pid, &info);
         }
     }
+
+    //TODO: add error callback
+    void* initializeAPIState() 
+    {
+        ptimetracker::APIState* s = new ptimetracker::APIState();
+        return s;
+    }
+
+    void freeAPIState(void* s)
+    {
+        ptimetracker::APIState* state = (ptimetracker::APIState*)s;
+        delete state;
+    }
 }
