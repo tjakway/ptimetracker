@@ -64,7 +64,14 @@
 #define PROC_CN_MCAST_LISTEN (1)
 #define PROC_CN_MCAST_IGNORE (2)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int register_proc_msg_handler(void*);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
