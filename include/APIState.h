@@ -26,7 +26,7 @@ extern "C" {
         PROC_END=2
     };
 
-    typedef const void (*EventCallback)(int, enum ProcMatchEventType);
+    typedef void (*EventCallback)(int, enum ProcMatchEventType);
     typedef void (*ErrorCallback)(const char*);
 
     void addProcMatcher(void* state, EventCallback eventCallback,

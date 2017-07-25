@@ -44,5 +44,5 @@ target_link_libraries(${TEST_TARGET} gtest gtest_main)
 target_link_libraries(${TEST_TARGET} ${MAIN_TARGET_LIB})
 
 add_executable(${ROOT_TEST_TARGET} ${PTIMETRACKER_ROOT_TEST_SRCS})
-target_link_libraries(${TEST_TARGET} gtest gtest_main)
-target_link_libraries(${TEST_TARGET} ${MAIN_TARGET_LIB})
+target_link_libraries(${ROOT_TEST_TARGET} gtest gtest_main)
+target_link_libraries(${ROOT_TEST_TARGET} ${MAIN_TARGET_LIB})

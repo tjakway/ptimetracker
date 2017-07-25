@@ -16,14 +16,15 @@
 
 namespace {
     static bool errorSet = false;
-    void errorCallback() {
+    void errorCallback(const char* msg) {
+        std::cerr << "error received: " << msg << std::endl;
         errorSet = true;
     }
 
     static pid_t callbackPid = -1;
     static std::unique_ptr<ProcMatchEventType> callbackEventType;
 
-    void eventCallback(pid_t pid, ProcMatchEventType eventType)
+    void eventCallback(int pid, ProcMatchEventType eventType)
     {
         callbackPid = pid;
         callbackEventType = make_unique<ProcMatchEventType>(eventType);
@@ -43,7 +44,25 @@ namespace {
 
         if(pid > 0)
         {
-            exec(path);
+            //TODO: fix this race condition...
+            sleep(1);
+            execl(path, (const char*)nullptr, (char*)nullptr);
+        }
+    }
+
+    void signalSelf(int seconds)
+    {
+        const pid_t selfPid = getpid();
+
+        pid_t pid = fork();
+        ASSERT_TRUE(pid > -1);
+
+        //if we're not the parent...
+        if(pid > 0)
+        {
+            //wait a duration then break the parent out of the wake loop
+            sleep(seconds);
+            kill(selfPid, SIGINT);
         }
     }
 }
@@ -60,13 +79,19 @@ TEST(pTimeTrackerRootTests, testLaunchTrue)
     
     addProcMatcher(state, 
             eventCallback, 
-            PROG_NAME_REGEX.c_str(), 
+            PROG_NAME_REGEX, 
             //ignore argv
             true, 
             nullptr);
 
+    //set up to break us out of the wait loop
+    signalSelf(2);
+
     launchProg(PROG_NAME);
 
+    int rc = startListening(state);
+
+    ASSERT_FALSE(errorSet);
     ASSERT_TRUE(callbacksCalled());
 
     freeAPIState(state);
