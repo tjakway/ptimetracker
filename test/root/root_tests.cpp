@@ -1,8 +1,10 @@
 #include "gtest/gtest.h"
 #include "proc_functions.hpp"
+#include "Util.h"
 
 #include <iostream>
 #include <string>
+#include <memory>
 
 #include <cstdlib>
 
@@ -11,69 +13,63 @@
 #include <signal.h>
 #include <dirent.h>
 
-namespace {
-    class OpenDirException : public std::runtime_error
-    {
-    public:
-        OpenDirException(std::string const& dir)
-            : std::runtime_error("Error while opening " + dir)
-        {}
-    };
 
-    bool dirExists(std::string dirName)
-    {
-        DIR* dir = opendir(dirName.c_str());
-        if(dir) {
-            return true;
-        } else if (errno == ENOENT) {
-            return false;
-        } else {
-            throw OpenDirException(dirName);
-        }
+namespace {
+    static bool errorSet = false;
+    void errorCallback() {
+        errorSet = true;
     }
 
-    std::string getCwd()
+    static pid_t callbackPid = -1;
+    static std::unique_ptr<ProcMatchEventType> callbackEventType;
+
+    void eventCallback(pid_t pid, ProcMatchEventType eventType)
     {
-        const long size = pathconf(".", _PC_PATH_MAX);
-        char* cwd = new char[size];
+        callbackPid = pid;
+        callbackEventType = make_unique<ProcMatchEventType>(eventType);
+    }
 
-        const char* ret = getcwd(cwd, (size_t)size);
+    bool callbacksCalled()
+    {
+        return callbackPid != -1 && 
+            (callbackEventType != nullptr && *callbackEventType != 0);
+    }
 
-        std::string retStr(cwd);
+    void launchProg(const char* path)
+    {
+        pid_t pid = fork();
 
-        delete[] cwd;
+        ASSERT_TRUE(pid > -1);
 
-        return retStr;
+        if(pid > 0)
+        {
+            exec(path);
+        }
     }
 }
 
 namespace ptimetracker {
 
-TEST(pTimeTrackerTests, testCwd)
+TEST(pTimeTrackerRootTests, testLaunchTrue)
 {
-    pid_t pid = fork();
-    if(pid == -1) {
-        std::cerr << "Error in fork, pid = -1" << std::endl;
-        ASSERT_TRUE(false);
-    }
-    else if(pid == 0) {
-        //we're the child process
-        kill(getpid(), SIGSTOP);
-        exit(1);
-    } else {
-        pid_t child = pid;
+    const char* PROG_NAME = "/bin/true";
+    const char* PROG_NAME_REGEX = PROG_NAME;
 
-        //run assertions
-        auto childCwd = ProcInfo::readCwd(child);
+    void* state = initializeAPIState();
+    setAPIStateErrorCallback(state, errorCallback);
+    
+    addProcMatcher(state, 
+            eventCallback, 
+            PROG_NAME_REGEX.c_str(), 
+            //ignore argv
+            true, 
+            nullptr);
 
-        ASSERT_TRUE(dirExists(childCwd));
-        ASSERT_TRUE(childCwd == getCwd());
-        ASSERT_TRUE(childCwd == ProcInfo::readCwd(getpid()));
+    launchProg(PROG_NAME);
 
-        //signal the child process to continue
-        //it will exit normally
-        kill(child, SIGCONT);
-    }
+    ASSERT_TRUE(callbacksCalled());
+
+    freeAPIState(state);
 }
 
 }
