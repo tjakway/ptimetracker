@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "proc_functions.hpp"
-#include "Util.h"
 
 #include <iostream>
 #include <string>
@@ -11,6 +10,42 @@
 #include <unistd.h>
 #include <signal.h>
 #include <dirent.h>
+
+namespace {
+    class OpenDirException : public std::runtime_error
+    {
+    public:
+        OpenDirException(std::string const& dir)
+            : std::runtime_error("Error while opening " + dir)
+        {}
+    };
+
+    bool dirExists(std::string dirName)
+    {
+        DIR* dir = opendir(dirName.c_str());
+        if(dir) {
+            return true;
+        } else if (errno == ENOENT) {
+            return false;
+        } else {
+            throw OpenDirException(dirName);
+        }
+    }
+
+    std::string getCwd()
+    {
+        const long size = pathconf(".", _PC_PATH_MAX);
+        char* cwd = new char[size];
+
+        const char* ret = getcwd(cwd, (size_t)size);
+
+        std::string retStr(cwd);
+
+        delete[] cwd;
+
+        return retStr;
+    }
+}
 
 namespace ptimetracker {
 
