@@ -65,8 +65,8 @@
 #define PROC_CN_MCAST_IGNORE (2)
 
 
-void handle_msg(struct cn_msg*);
+void handle_msg(void*, struct cn_msg*);
 
-int register_proc_msg_handler(void (*handler)(struct cn_msg*));
+int register_proc_msg_handler(void*, void (*handler)(void*, struct cn_msg*));
 
 #endif

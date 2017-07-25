@@ -24,6 +24,14 @@ extern "C" {
 
     void addProcMatcher(void* state, EventCallback eventCallback,
             const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
+
+    void execMatches(void*, pid_t, ProcMatchEventType);
+
+    void setAPIStateErrorCallback(void*, ErrorCallback);
+
+    void* initializeAPIState();
+
+    void freeAPIState(void*);
 }
 
 #endif

@@ -31,8 +31,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include "exec-notify.h"
+#include "APIState.h"
 
-void handle_msg (struct cn_msg *cn_hdr)
+void handle_msg (void* state, struct cn_msg *cn_hdr)
 {
 	char cmdline[1024], fname1[1024], ids[1024], fname2[1024], buf[1024];
 	int r = 0, fd, i;
@@ -96,7 +97,7 @@ void handle_msg (struct cn_msg *cn_hdr)
 	}
 }
 
-int register_proc_msg_handler(void (*handler)(struct cn_msg*)) 
+int register_proc_msg_handler(void* state, void (*handler)(void*, struct cn_msg*)) 
 {
 	int sk_nl;
 	int err;
@@ -189,7 +190,7 @@ int register_proc_msg_handler(void (*handler)(struct cn_msg*))
 			    (nlh->nlmsg_type == NLMSG_OVERRUN))
 				break;
                         //invoke the callback
-			(*handler)(cn_hdr);
+			(*handler)(state, cn_hdr);
 			if (nlh->nlmsg_type == NLMSG_DONE)
 				break;
 			nlh = NLMSG_NEXT(nlh, recv_len);
