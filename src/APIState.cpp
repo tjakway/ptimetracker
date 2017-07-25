@@ -1,6 +1,7 @@
 #include "APIState.h"
 
 #include "proc_functions.hpp"
+#include "exec-notify.h"
 #include <vector>
 #include <algorithm>
 
@@ -65,5 +66,14 @@ extern "C" {
     {
         ptimetracker::APIState* state = (ptimetracker::APIState*)s;
         delete state;
+    }
+
+    /**
+     * begin listening for proc events in a loop
+     * This function won't return until the process ends
+     */
+    int startListening(void* state)
+    {
+        return register_proc_msg_handler(state);
     }
 }
