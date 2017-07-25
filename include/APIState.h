@@ -42,6 +42,8 @@ extern "C" {
 
     void freeAPIState(void*);
 
+    int startListening(void*);
+
 #ifdef __cplusplus
 }
 #endif
