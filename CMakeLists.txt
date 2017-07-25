@@ -5,6 +5,7 @@ project(PTIMETRACKER)
 set(MAIN_TARGET ptimetracker)
 set(MAIN_TARGET_LIB timetracker)
 set(TEST_TARGET test_ptimetracker)
+set(ROOT_TEST_TARGET root_test_ptimetracker)
 
 #see https://stackoverflow.com/questions/10851247/how-to-activate-c-11-in-cmake
 set(CMAKE_C_STANDARD 11)
@@ -14,6 +15,7 @@ set(PTIMETRACKER_SRCS_NOT_MAIN src/exec-notify.c src/proc_functions.cpp src/APIS
 set(PTIMETRACKER_MAIN_SRC src/main.c)
 set(PTIMETRACKER_SRCS ${PTIMETRACKER_SRCS_NOT_MAIN} ${PTIMETRACKER_MAIN_SRC})
 set(PTIMETRACKER_TEST_SRCS test/test_procmatcher.cpp)
+set(PTIMETRACKER_ROOT_TEST_SRCS test/root/root_tests.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
@@ -38,5 +40,9 @@ add_executable(${MAIN_TARGET} ${PTIMETRACKER_MAIN_SRC})
 target_link_libraries(${MAIN_TARGET} ${MAIN_TARGET_LIB})
 
 add_executable(${TEST_TARGET} ${PTIMETRACKER_TEST_SRCS})
+target_link_libraries(${TEST_TARGET} gtest gtest_main)
+target_link_libraries(${TEST_TARGET} ${MAIN_TARGET_LIB})
+
+add_executable(${ROOT_TEST_TARGET} ${PTIMETRACKER_ROOT_TEST_SRCS})
 target_link_libraries(${TEST_TARGET} gtest gtest_main)
 target_link_libraries(${TEST_TARGET} ${MAIN_TARGET_LIB})
