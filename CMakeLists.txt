@@ -11,8 +11,8 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 
 set(PTIMETRACKER_SRCS_NOT_MAIN src/exec-notify.c src/proc_functions.cpp src/APIState.cpp)
-set(PTIMETRACKER_SRCS ${PTIMETRACKER_SRCS_NOT_MAIN} src/main.c)
 set(PTIMETRACKER_MAIN_SRC src/main.c)
+set(PTIMETRACKER_SRCS ${PTIMETRACKER_SRCS_NOT_MAIN} ${PTIMETRACKER_MAIN_SRC})
 set(PTIMETRACKER_TEST_SRCS test/test_procmatcher.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
