@@ -43,11 +43,11 @@ namespace ptimetracker {
         : eventCallback(callback), matchOnlyProgName(matchOnlyProgName)
     {
         if(procRegexStr != nullptr) {
-            procRegex = make_unique<std::regex>(procRegexStr);
+            procRegex = std::unique_ptr<std::regex>(new std::regex(procRegexStr));
         }
 
         if(cwdRegexStr != nullptr) {
-            cwdRegex = make_unique<std::regex>(cwdRegexStr);
+            cwdRegex = std::unique_ptr<std::regex>(new std::regex(cwdRegexStr));
         }
     }
 

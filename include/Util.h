@@ -4,16 +4,17 @@
 #include <string>
 #include <stdexcept>
 #include <memory>
+#include <utility>
 
-/**
- * see https://stackoverflow.com/questions/12580432/why-does-c11-have-make-shared-but-not-make-unique
- */
-template<typename T, typename ...Args>
-std::unique_ptr<T> make_unique( Args&& ...args )
-{
-    return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
-}
 
+#define NEW_EXCEPTION_TYPE(A) \
+    class A : public std::runtime_error \
+    { \
+    public: \
+        A(std::string const& message) \
+            : std::runtime_error(message) \
+        {} \
+    };
 
 class OpenDirException : public std::runtime_error
 {

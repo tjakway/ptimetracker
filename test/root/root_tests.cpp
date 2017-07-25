@@ -27,7 +27,9 @@ namespace {
     void eventCallback(int pid, ProcMatchEventType eventType)
     {
         callbackPid = pid;
-        callbackEventType = make_unique<ProcMatchEventType>(eventType);
+        ProcMatchEventType* t = new ProcMatchEventType;
+        *t = eventType;
+        callbackEventType = std::unique_ptr<ProcMatchEventType>(t);
     }
 
     bool callbacksCalled()

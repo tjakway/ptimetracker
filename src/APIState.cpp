@@ -74,6 +74,8 @@ extern "C" {
      */
     int startListening(void* state)
     {
-        return register_proc_msg_handler(state);
+        return 1;
+            //TODO
+        //return register_proc_msg_handler(state);
     }
 }

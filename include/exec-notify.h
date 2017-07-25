@@ -68,7 +68,7 @@
 extern "C" {
 #endif
 
-int register_proc_msg_handler(void*);
+void handle_msg (void* state, struct cn_msg *cn_hdr);
 
 #ifdef __cplusplus
 }
