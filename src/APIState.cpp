@@ -49,7 +49,7 @@ extern "C" {
         }
     }
 
-    void setErrorCallback(void* state, ErrorCallback errorCallback)
+    void setAPIStateErrorCallback(void* state, ErrorCallback errorCallback)
     {
         ptimetracker::APIState* s = (ptimetracker::APIState*)state;
         s->errorCallback = errorCallback;
