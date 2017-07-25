@@ -1,5 +1,12 @@
 #include "exec-notify.h"
+#include "APIState.h"
+
 
 int main(int argc, char** argv) {
-    //return register_proc_msg_handler(&handle_msg);
+    void* state = initializeAPIState();
+    
+    int res = startListening(state);
+
+    freeAPIState(state);
+    return res;
 }
