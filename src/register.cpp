@@ -10,8 +10,9 @@ NEW_EXCEPTION_TYPE(MulticastMessageIgnoredException);
 
 namespace ptimetracker {
 
+
     //TODO: maybe pass a stream to write log messages to?
-int listenForMessages(APIState* state,
+void listenForMessages(APIState* state,
         std::function<bool(APIState*, cn_msg*)> shouldContinue,
         std::function<void(void*, cn_msg*)> msgHandlerCallback)
 {
@@ -121,5 +122,6 @@ int listenForMessages(APIState* state,
             }
     }
 }
+
 
 }
