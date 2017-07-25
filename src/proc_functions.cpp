@@ -46,8 +46,8 @@ namespace {
 }
 
 namespace ptimetracker {
-    ProcMatcher::ProcMatcher(const void (*callback)(int), const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
-        : callback(callback), matchOnlyProgName(matchOnlyProgName)
+    ProcMatcher::ProcMatcher(EventCallback callback, const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
+        : eventCallback(callback), matchOnlyProgName(matchOnlyProgName)
     {
         if(procRegexStr != nullptr) {
             procRegex = make_unique<std::regex>(procRegexStr);
@@ -93,10 +93,10 @@ namespace ptimetracker {
     /**
      * optionally takes a pointer to cache state
      */
-    void ProcMatcher::execMatch(pid_t pid, ProcInfo* info)
+    void ProcMatcher::execMatch(pid_t pid, ProcMatchEventType eventType, ProcInfo* info)
     {
         if(matches(pid, info)) {
-            callback(pid);
+            eventCallback(pid, eventType);
         }
     }
 

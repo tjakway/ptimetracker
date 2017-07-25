@@ -1,6 +1,8 @@
 #ifndef PROC_FUNCTIONS_HPP
 #define PROC_FUNCTIONS_HPP
 
+#include "APIState.h"
+
 #include <regex>
 #include <memory>
 
@@ -25,17 +27,17 @@ class ProcMatcher
     bool procMatches(pid_t, ProcInfo*);
     bool cwdMatches(pid_t, ProcInfo*);
 
-    const void (*callback)(int);
+    EventCallback eventCallback;
 
     bool matches(pid_t, ProcInfo*);
 
 public:
-    ProcMatcher(const void (*callback)(int), const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
+    ProcMatcher(EventCallback eventCallback, const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
 
     /**
      * runs the saved callback if it matches this PID
      */
-    void execMatch(pid_t, ProcInfo* info = nullptr);
+    void execMatch(pid_t, ProcMatchEventType, ProcInfo* info = nullptr);
 };
 
 

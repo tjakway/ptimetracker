@@ -12,7 +12,18 @@ class APIState;
 }
 
 extern "C" {
-    void addProcMatcher(void* state, const void (*callback)(int), const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
+    enum ProcMatchEventType {
+        PROC_START=1,
+        PROC_END=2
+    };
+
+    typedef const void (*EventCallback)(int, int);
+    typedef void (*ErrorCallback)(const char*);
+
+    void setErrorCallback(void* state, ErrorCallback errorCallback);
+
+    void addProcMatcher(void* state, EventCallback eventCallback,
+            const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
 }
 
 #endif
