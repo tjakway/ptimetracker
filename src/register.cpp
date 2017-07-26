@@ -2,7 +2,14 @@
 #include "exec-notify.h"
 #include "APIState.h"
 
+#include <iostream>
+#include <stdexcept>
 #include <functional>
+#include <algorithm>
+
+const int EXEC_NOTIFY_BUFF_SIZE = 
+    std::max<int>(std::max<int>(SEND_MESSAGE_SIZE, RECV_MESSAGE_SIZE), 1024);
+const int MIN_RECV_SIZE = std::min<int>(SEND_MESSAGE_SIZE, RECV_MESSAGE_SIZE);
 
 NEW_EXCEPTION_TYPE(MustBeRootException);
 NEW_EXCEPTION_TYPE(NetlinkSocketException);
@@ -20,7 +27,7 @@ void listenForMessages(APIState* state,
     int err;
     struct sockaddr_nl my_nla, kern_nla, from_nla;
     socklen_t from_nla_len;
-    char buff[BUFF_SIZE];
+    char buff[EXEC_NOTIFY_BUFF_SIZE];
     int rc = -1;
     struct nlmsghdr *nl_hdr;
     struct cn_msg *cn_hdr;
@@ -94,7 +101,7 @@ void listenForMessages(APIState* state,
         ; memset(buff, 0, sizeof(buff)), from_nla_len = sizeof(from_nla)) {
             struct nlmsghdr *nlh = (struct nlmsghdr*)buff;
             memcpy(&from_nla, &kern_nla, sizeof(from_nla));
-            recv_len = recvfrom(sk_nl, buff, BUFF_SIZE, 0,
+            recv_len = recvfrom(sk_nl, buff, EXEC_NOTIFY_BUFF_SIZE, 0,
                             (struct sockaddr*)&from_nla, &from_nla_len);
             if (from_nla.nl_pid != 0)
                     continue;
@@ -123,5 +130,23 @@ void listenForMessages(APIState* state,
     }
 }
 
+}
 
+extern "C" {
+    int listenForMessagesForever(void* state) 
+    {
+        try {
+            auto shouldContinue = [](ptimetracker::APIState* a, cn_msg* b) { return true; };
+            auto msgCallback = handle_msg;
+
+            listenForMessages((ptimetracker::APIState*)state,
+                    shouldContinue, msgCallback);
+            return 0;
+        }
+        catch(...) {
+            std::exception_ptr e = std::current_exception();
+            std::cerr <<(e ? e.__cxa_exception_type()->name() : "null") << std::endl;
+            return 1;
+        }
+    }
 }
