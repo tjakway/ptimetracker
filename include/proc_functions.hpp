@@ -38,6 +38,8 @@ public:
      * runs the saved callback if it matches this PID
      */
     void execMatch(pid_t, ProcMatchEventType, ProcInfo* info = nullptr);
+
+    static const std::regex::flag_type REGEX_FLAGS;
 };
 
 

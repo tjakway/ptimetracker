@@ -35,18 +35,24 @@ namespace {
             : std::runtime_error(message + " Was thrown")
         {}
     };
+
 }
 
 namespace ptimetracker {
+    const std::regex::flag_type ProcMatcher::REGEX_FLAGS = 
+        std::regex::extended | std::regex::optimize;
+
     ProcMatcher::ProcMatcher(EventCallback callback, const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
         : eventCallback(callback), matchOnlyProgName(matchOnlyProgName)
     {
         if(procRegexStr != nullptr) {
-            procRegex = std::unique_ptr<std::regex>(new std::regex(procRegexStr));
+            procRegex = std::unique_ptr<std::regex>(new std::regex(procRegexStr, 
+                        REGEX_FLAGS));
         }
 
         if(cwdRegexStr != nullptr) {
-            cwdRegex = std::unique_ptr<std::regex>(new std::regex(cwdRegexStr));
+            cwdRegex = std::unique_ptr<std::regex>(new std::regex(cwdRegexStr,
+                        REGEX_FLAGS));
         }
     }
 
