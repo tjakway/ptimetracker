@@ -190,4 +190,18 @@ extern "C" {
             return 0;
         });
     }
+
+    int listenUntilCallback(void* state, bool (*callback)(cn_msg*))
+    {
+        return ptimetracker::returnOnException([=]() {
+            const auto shouldContinue = [=](ptimetracker::APIState* s, cn_msg* msg) {
+                //ignore the state pointer
+                return (*callback)(msg);
+            };
+
+            listenForMessages((ptimetracker::APIState*)state, 
+                    shouldContinue, handleMsgCallback);
+            return 0;
+        });
+    }
 }

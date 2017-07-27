@@ -46,6 +46,7 @@ extern "C" {
 
     int listenForMessagesForever(void*);
     int listenUntilElapsed(void*, unsigned long);
+    int listenUntilCallback(void*, bool (*callback)(cn_msg*));
 
 #ifdef __cplusplus
 }
