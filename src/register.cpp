@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <functional>
 #include <algorithm>
+#include <chrono>
 
 const int EXEC_NOTIFY_BUFF_SIZE = 
     std::max<int>(std::max<int>(SEND_MESSAGE_SIZE, RECV_MESSAGE_SIZE), 1024);
@@ -130,6 +131,10 @@ void listenForMessages(APIState* state,
     }
 }
 
+} //namespace ptimetracker
+
+namespace {
+    static std::function<void(void*, cn_msg*)> handleMsgCallback = handle_msg;
 }
 
 extern "C" {
@@ -137,10 +142,10 @@ extern "C" {
     {
         try {
             auto shouldContinue = [](ptimetracker::APIState* a, cn_msg* b) { return true; };
-            auto msgCallback = handle_msg;
+            
 
             listenForMessages((ptimetracker::APIState*)state,
-                    shouldContinue, msgCallback);
+                    shouldContinue, handleMsgCallback);
             return 0;
         }
         catch(...) {
@@ -148,5 +153,32 @@ extern "C" {
             std::cerr <<(e ? e.__cxa_exception_type()->name() : "null") << std::endl;
             return 1;
         }
+    }
+
+    void listenUntilElapsed(void* state, unsigned long millis)
+    {
+        //get current time & cast -> milliseconds using std::chrono functions
+       const auto nowInMillis = []() {
+            return std::chrono::duration_cast<std::chrono::milliseconds>
+                    (std::chrono::system_clock::now().time_since_epoch());
+       };
+
+       const std::chrono::milliseconds start = nowInMillis(),
+                                    //convert parameter -> std::chrono::milliseconds
+                                    _millis = std::chrono::milliseconds(millis);
+
+       const auto shouldContinue = [&nowInMillis, &start, &_millis](ptimetracker::APIState* s, cn_msg* msg)
+       {
+           const std::chrono::milliseconds diff = nowInMillis() - start;
+           
+           //stop if too much time has elapsed
+           if(diff > _millis) {
+               return false;
+           } else {
+               return true;
+           }
+       };
+
+       listenForMessages((ptimetracker::APIState*)state, shouldContinue, handleMsgCallback);
     }
 }
