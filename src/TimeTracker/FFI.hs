@@ -1,6 +1,7 @@
 module TimeTracker.FFI where
 
 import Foreign.C.Types
+import Foreign.C.String
 import Foreign.Ptr
 
 --type synonyms, as defined in APIState.h
@@ -21,7 +22,7 @@ foreign import ccall "APIState.h freeAPIState"
 
 foreign import ccall "APIState.h addProcMatcher"
     addProcMatcher :: APIStatePtr -> EventCallbackFunPtr -> 
-                      CString -> CBool -> CString -> IO ()
+                      CString -> CInt -> CString -> IO () -- the CInt is a C99 bool
 
 foreign import ccall "APIState.h execMatches"
     execMatches :: APIStatePtr -> CInt -> CProcMatchEventType -> IO ()
