@@ -35,7 +35,6 @@ namespace {
             : std::runtime_error(message + " Was thrown")
         {}
     };
-
 }
 
 namespace ptimetracker {
@@ -59,10 +58,10 @@ namespace ptimetracker {
         else {
             //check whether we're testing just the program name or the entire invocation
             if(matchOnlyProgName) {
-                return std::regex_match(ProcInfo::readProcName(pid, info), *procRegex);
+                return regexMatch(ProcInfo::readProcName(pid, info), *procRegex);
             }
             else {
-                return std::regex_match(ProcInfo::readCmdLine(pid, info), *procRegex);
+                return regexMatch(ProcInfo::readCmdLine(pid, info), *procRegex);
             }
         }
     }
@@ -73,7 +72,7 @@ namespace ptimetracker {
             return true;
         }
         else {
-            return std::regex_match(ProcInfo::readCwd(pid), *cwdRegex);
+            return regexMatch(ProcInfo::readCwd(pid), *cwdRegex);
         }
     }
 

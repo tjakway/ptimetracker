@@ -96,7 +96,7 @@ namespace ptimetracker {
 TEST(pTimeTrackerRootTests, testLaunchTrue)
 {
     const char* PROG_NAME = "/bin/true";
-    const char* PROG_NAME_REGEX = PROG_NAME;
+    const char* PROG_NAME_REGEX = ".*"; //R"rgx(.*)rgx";
 
     void* state = initializeAPIState();
     setAPIStateErrorCallback(state, errorCallback);
