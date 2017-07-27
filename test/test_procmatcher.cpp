@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <regex>
 
 #include <cstdlib>
 
@@ -13,6 +14,19 @@
 #include <dirent.h>
 
 namespace ptimetracker {
+
+//make sure C++ std::regex works...
+TEST(pTimeTrackerTests, regexTest)
+{
+    const std::string regexStr = R"rgx(.*)rgx";
+    const std::regex r(regexStr);
+
+    const std::string testStr("a;sljf12#$lskfj(/");
+
+    ASSERT_TRUE(std::regex_match(testStr, r));
+
+    ASSERT_TRUE(regexMatch(testStr, r));
+}
 
 TEST(pTimeTrackerTests, testCwd)
 {
