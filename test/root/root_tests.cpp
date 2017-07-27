@@ -61,6 +61,8 @@ namespace {
             //parent should assert the program was launched
             listenAndWait(state, WAIT_TIME_MILLIS);
 
+            std::clog << "Done waiting" << std::endl;
+
             //make sure the child has exited
             const pid_t childPid = pid;
             int status;

@@ -108,9 +108,7 @@ void listenForMessages(APIState* state,
             if (recv_len < 1)
                     continue;
 
-            while (true) {
-                    if(!NLMSG_OK(nlh, recv_len))
-                        break;
+            while (NLMSG_OK(nlh, recv_len)) {
 
                     cn_hdr = (struct cn_msg*)NLMSG_DATA(nlh);
                     if (nlh->nlmsg_type == NLMSG_NOOP)
@@ -120,14 +118,26 @@ void listenForMessages(APIState* state,
                             break;
                     //invoke the callback
                     msgHandlerCallback(state, cn_hdr);
+
+                    /**
+                     * ***WARNING*** GOTO
+                     * I am aware of the dangers of goto
+                     * This is one of its few remaining uses
+                     * C/C++ do not support breaking out of nested loops
+                     * see https://stackoverflow.com/questions/1257744/can-i-use-break-to-exit-multiple-nested-for-loops
+                     */
+                    if(!shouldContinue(state, cn_hdr)) {
+                        goto exit_loop;
+                    }
+
                     if (nlh->nlmsg_type == NLMSG_DONE)
                             break;
                     nlh = NLMSG_NEXT(nlh, recv_len);
-
-                    if(!shouldContinue(state, cn_hdr))
-                        break;
             }
+
     }
+exit_loop:
+    ;
 }
 
 } //namespace ptimetracker
@@ -165,8 +175,9 @@ extern "C" {
 
             const auto shouldContinue = [&nowInMillis, &start, &_millis](ptimetracker::APIState* s, cn_msg* msg)
             {
-                const std::chrono::milliseconds diff = nowInMillis() - start;
+                const auto diff = (nowInMillis() - start);
                 
+                std::cerr << "diff = " << std::to_string(diff.count()) << std::endl;
                 //stop if too much time has elapsed
                 if(diff > _millis) {
                     return false;
