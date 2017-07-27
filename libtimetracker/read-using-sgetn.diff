@@ -1,0 +1,54 @@
+diff --git a/src/Util.cpp b/src/Util.cpp
+index e8e03ac..8190399 100644
+--- a/src/Util.cpp
++++ b/src/Util.cpp
+@@ -3,6 +3,8 @@
+ #include <regex>
+ #include <string>
+ #include <fstream>
++#include <iostream>
++#include <limits>
+ 
+ #include <sys/types.h>
+ #include <unistd.h>
+@@ -10,7 +12,7 @@
+ 
+ namespace ptimetracker {
+ 
+-NEW_EXCEPTION_TYPE(ReadFileException)
++NEW_EXCEPTION_TYPE(FileSizeException)
+ 
+ std::string readFile(std::string inFileName)
+ {
+@@ -19,6 +21,11 @@ std::string readFile(std::string inFileName)
+     //open the input file
+     ifs.open(inFileName);
+ 
++    //don't read it if it doesn't exist
++    if(!ifs.good())
++    {
++        return std::string();
++    }
+ 
+     //see http://www.cplusplus.com/reference/fstream/ifstream/rdbuf/
+     //get pointer to associated buffer object
+@@ -26,6 +33,19 @@ std::string readFile(std::string inFileName)
+ 
+     //get file size using buffer's members
+     std::size_t size = pbuf->pubseekoff (0,ifs.end,ifs.in);
++
++    const auto sizeException = FileSizeException("Size of file " + inFileName + " is " 
++            + std::to_string(size));
++
++    if(size < 0) {
++        throw sizeException;
++    }
++    else if(size == std::numeric_limits<size_t>::max()) {
++        throw sizeException;
++    } else if (size == 0) {
++        std::clog << "Warning: reading empty file (" << inFileName << ")" << std::endl;
++    }
++
+     pbuf->pubseekpos (0,ifs.in);
+ 
+     //allocate memory to contain file data

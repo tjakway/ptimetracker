@@ -1,0 +1,15 @@
+diff --git a/src/Util.cpp b/src/Util.cpp
+index 5806924..1eb99f3 100644
+--- a/src/Util.cpp
++++ b/src/Util.cpp
+@@ -47,9 +47,7 @@ int returnOnException(std::function<int(void)> f) {
+ 
+ bool regexMatch(std::string str, std::regex r)
+ {
+-    std::smatch base_match;
+-    std::regex_match(str, base_match, r);
+-    return !base_match.empty();
++    return std::regex_match(str, r);
+ }
+ 
+ bool regexMatch(const char* str, std::regex r)
