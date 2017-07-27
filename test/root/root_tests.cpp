@@ -14,7 +14,14 @@
 #include <dirent.h>
 
 
+#define WAIT_TIME_MILLIS 5000
+
 namespace {
+    NEW_EXCEPTION_TYPE(ForkErrorInRootTestsException)
+
+        //prototypes
+    void listenAndWait(void* state, unsigned long millis);
+
     static bool errorSet = false;
     void errorCallback(const char* msg) {
         std::cerr << "error received: " << msg << std::endl;
@@ -38,34 +45,29 @@ namespace {
             (callbackEventType != nullptr && *callbackEventType != 0);
     }
 
-    void launchProg(const char* path)
+    void launchProgAndWait(void* state, const char* path)
     {
         pid_t pid = fork();
 
-        ASSERT_TRUE(pid > -1);
-
         if(pid > 0)
         {
+            //child should wait until we're sure the parent is listening then launch the program
+            //
             //TODO: fix this race condition...
             sleep(1);
             execl(path, (const char*)nullptr, (char*)nullptr);
+
+        } else if(pid == 0) {
+            //parent should assert the program was launched
+            listenAndWait(state, WAIT_TIME_MILLIS);
+        } else {
+            throw ForkErrorInRootTestsException("in launchProgAndWait");
         }
     }
 
-    void signalSelf(int seconds)
+    void listenAndWait(void* state, unsigned long millis)
     {
-        const pid_t selfPid = getpid();
-
-        pid_t pid = fork();
-        ASSERT_TRUE(pid > -1);
-
-        //if we're not the parent...
-        if(pid > 0)
-        {
-            //wait a duration then break the parent out of the wake loop
-            sleep(seconds);
-            kill(selfPid, SIGINT);
-        }
+        ASSERT_EQ(listenUntilElapsed(state, millis), 0);
     }
 }
 
@@ -86,12 +88,9 @@ TEST(pTimeTrackerRootTests, testLaunchTrue)
             true, 
             nullptr);
 
-    //set up to break us out of the wait loop
-    signalSelf(2);
 
-    launchProg(PROG_NAME);
+    launchProgAndWait(state, PROG_NAME);
 
-    int rc = startListening(state);
 
     ASSERT_FALSE(errorSet);
     ASSERT_TRUE(callbacksCalled());

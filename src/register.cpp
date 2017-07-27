@@ -151,7 +151,7 @@ extern "C" {
         });
     }
 
-    void listenUntilElapsed(void* state, unsigned long millis)
+    int listenUntilElapsed(void* state, unsigned long millis)
     {
         ptimetracker::returnOnException([&]() {
             //get current time & cast -> milliseconds using std::chrono functions
