@@ -49,7 +49,7 @@ namespace {
     {
         pid_t pid = fork();
 
-        if(pid > 0)
+        if(pid == 0)
         {
             //child should wait until we're sure the parent is listening then launch the program
             //
@@ -57,9 +57,24 @@ namespace {
             sleep(1);
             execl(path, (const char*)nullptr, (char*)nullptr);
 
-        } else if(pid == 0) {
+        } else if(pid > 0) {
             //parent should assert the program was launched
             listenAndWait(state, WAIT_TIME_MILLIS);
+
+            //make sure the child has exited
+            const pid_t childPid = pid;
+            int status;
+            const pid_t retPid = waitpid(childPid, &status, 0);
+
+            const int childExitStatus = WEXITSTATUS(childPid);
+            const bool wasSignaled = WIFSIGNALED(childPid);
+            const bool wasStopped = WIFSTOPPED(childPid);
+
+            ASSERT_EQ(childPid, retPid);
+            //make sure the child process exited normally
+            ASSERT_EQ(childExitStatus, 0);
+            ASSERT_FALSE(wasSignaled);
+            ASSERT_FALSE(wasStopped);
         } else {
             throw ForkErrorInRootTestsException("in launchProgAndWait");
         }
