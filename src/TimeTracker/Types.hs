@@ -1,7 +1,7 @@
 module TimeTracker.Types where
 
 import TimeTracker.FFI
-import Foreign.Ptr (nullPtr)
+import Foreign.Ptr (freeHaskellFunPtr, nullPtr)
 import Control.Monad.State
 
 data ProgramLoggerS = ProgramLoggerS {
@@ -12,6 +12,7 @@ data ProgramLoggerS = ProgramLoggerS {
                     apiState :: APIStatePtr
                     }
 
+emptyProgramLoggerS :: ProgramLoggerS
 emptyProgramLoggerS = ProgramLoggerS {
     eventCallbacks = [],
     errorCallbacks = [],
@@ -25,8 +26,9 @@ type ProgramLoggerM a = State ProgramLoggerS a
 cleanupProgramLogger :: ProgramLoggerS -> IO ()
 cleanupProgramLogger s = do
         freeAPIState (apiState s)
-        mapM_ . mapM_ freeHaskellFunPtr 
-            [(eventCallbacks s), (errorCallbacks s), (stopListeningCallbacks s)]
+        mapM_ freeHaskellFunPtr (eventCallbacks s)
+        mapM_ freeHaskellFunPtr (errorCallbacks s)
+        mapM_ freeHaskellFunPtr (stopListeningCallbacks s)
 
 runProgramLogger :: ProgramLoggerM a -> IO a
 runProgramLogger stateAction = do

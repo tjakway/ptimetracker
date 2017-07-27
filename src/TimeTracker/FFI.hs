@@ -15,7 +15,7 @@ type CProcMatchEventType = CInt
 
 -- | returns a void pointer to api state
 foreign import ccall "APIState.h initializeAPIState"
-    initAPIState :: IO (APIStatePtr)
+    initializeAPIState :: IO (APIStatePtr)
 
 foreign import ccall "APIState.h freeAPIState"
     freeAPIState :: APIStatePtr -> IO ()
