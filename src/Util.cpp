@@ -1,5 +1,8 @@
 #include "Util.h"
 
+#include <regex>
+#include <string>
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -41,4 +44,18 @@ int returnOnException(std::function<int(void)> f) {
         return 1;
     }
 }
+
+bool regexMatch(std::string str, std::regex r)
+{
+    std::smatch base_match;
+    std::regex_match(str, base_match, r);
+    return !base_match.empty();
+}
+
+bool regexMatch(const char* str, std::regex r)
+{
+    std::string cppStr(str);
+    return regexMatch(cppStr, r);
+}
+
 }

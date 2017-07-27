@@ -6,6 +6,7 @@
 #include <memory>
 #include <utility>
 #include <iostream>
+#include <regex>
 
 
 //exception-handling macros
@@ -34,6 +35,10 @@ public:
 bool dirExists(std::string);
 
 std::string getCwd();
+
+
+bool regexMatch(std::string, std::regex);
+bool regexMatch(const char*, std::regex);
 
 }
 
