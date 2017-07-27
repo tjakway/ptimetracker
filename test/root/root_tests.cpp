@@ -33,8 +33,14 @@ namespace {
 
     void eventCallback(int pid, ProcMatchEventType eventType)
     {
-        callbackPid = pid;
-        callbackEventType = eventType;
+        if(callbackPid == -1)
+        {
+            callbackPid = pid;
+        }
+        if(callbackEventType == NO_EVENT)
+        {
+            callbackEventType = eventType;
+        }
     }
 
     /**
@@ -77,9 +83,9 @@ namespace {
             ASSERT_EQ(childPid, retPid);
             //make sure the child process exited normally
             //XXX: why do these assertions fail?
-            //ASSERT_EQ(childExitStatus, 0);
-            //ASSERT_FALSE(wasSignaled);
-            //ASSERT_FALSE(wasStopped);
+            ASSERT_EQ(childExitStatus, 0);
+            ASSERT_FALSE(wasSignaled);
+            ASSERT_FALSE(wasStopped);
         } else {
             throw ForkErrorInRootTestsException("in launchProgAndWait");
         }
