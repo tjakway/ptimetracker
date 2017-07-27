@@ -59,10 +59,10 @@ namespace ptimetracker {
         else {
             //check whether we're testing just the program name or the entire invocation
             if(matchOnlyProgName) {
-                return std::regex_match(ProcInfo::readProcName(pid), *procRegex);
+                return std::regex_match(ProcInfo::readProcName(pid, info), *procRegex);
             }
             else {
-                return std::regex_match(ProcInfo::readCmdLine(pid), *procRegex);
+                return std::regex_match(ProcInfo::readCmdLine(pid, info), *procRegex);
             }
         }
     }
