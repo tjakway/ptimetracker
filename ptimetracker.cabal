@@ -61,7 +61,7 @@ executable ptimetracker
   -- Base language which the package is written in.
   default-language:    Haskell2010
   
-  extra-libraries: timetracker
+  extra-libraries: stdc++ timetracker
 
 -- XXX TODO
 -- other-modules: MusicReader
