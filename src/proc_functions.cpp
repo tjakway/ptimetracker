@@ -40,7 +40,7 @@ namespace {
 
 namespace ptimetracker {
     const std::regex::flag_type ProcMatcher::REGEX_FLAGS = 
-        std::regex::extended | std::regex::optimize;
+        std::regex::egrep | std::regex::optimize;
 
     ProcMatcher::ProcMatcher(EventCallback callback, const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr)
         : eventCallback(callback), matchOnlyProgName(matchOnlyProgName)
@@ -62,12 +62,15 @@ namespace ptimetracker {
             return true;
         }
         else {
+            const auto progName = ProcInfo::readProcName(pid, info);
+
             //check whether we're testing just the program name or the entire invocation
             if(matchOnlyProgName) {
-                return regexMatch(ProcInfo::readProcName(pid, info), *procRegex);
+                return regexMatch(progName, *procRegex);
             }
             else {
-                return regexMatch(ProcInfo::readCmdLine(pid, info), *procRegex);
+                const auto fullCmdLine = progName + " " + ProcInfo::readCmdLine(pid, info);
+                return regexMatch(fullCmdLine, *procRegex);
             }
         }
     }
@@ -114,7 +117,13 @@ namespace ptimetracker {
             return *info->cmdLine;
         }
 
-        std::string cmdLine = readFile("/proc/" + std::to_string(pid) + "/cmdline");
+        // /proc/<pid>/cmdline is separated by NULLs
+        // replace them with spaces
+        std::string cmdLine = 
+            std::regex_replace(
+                    readFile("/proc/" + std::to_string(pid) + "/cmdline"),
+                    std::regex(R"(\0)"),
+                    " ");
 
         if(info != nullptr) {
             info->cmdLine = std::unique_ptr<std::string>(new std::string(cmdLine));

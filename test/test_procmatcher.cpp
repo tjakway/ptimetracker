@@ -16,16 +16,23 @@
 namespace ptimetracker {
 
 //make sure C++ std::regex works...
-TEST(pTimeTrackerTests, regexTest)
+TEST(RegexTests, matchAnything)
 {
     const std::string regexStr = R"rgx(.*)rgx";
-    const std::regex r(regexStr);
+    const std::regex r(regexStr, ProcMatcher::REGEX_FLAGS);
 
     const std::string testStr("a;sljf12#$lskfj(/");
 
     ASSERT_TRUE(std::regex_match(testStr, r));
 
     ASSERT_TRUE(regexMatch(testStr, r));
+}
+
+TEST(RegexTests, matchBinTrue)
+{
+    const std::regex r(R"rgx(\s*/bin/true\s*)rgx", ProcMatcher::REGEX_FLAGS);
+
+    ASSERT_TRUE(std::regex_match("/bin/true", r));
 }
 
 TEST(pTimeTrackerTests, testCwd)
