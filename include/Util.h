@@ -1,5 +1,5 @@
-#ifndef UTIL_H_
-#define UTIL_H_
+#ifndef PTIMETRACKER_UTIL_H_
+#define PTIMETRACKER_UTIL_H_
 
 #include <string>
 #include <stdexcept>
@@ -21,16 +21,7 @@
 
 namespace ptimetracker {
 
-int returnOnError(std::function<int(void)> f) {
-    try {
-        return f();
-    }
-    catch(...) {
-        std::exception_ptr e = std::current_exception();
-        std::cerr <<(e ? e.__cxa_exception_type()->name() : "null") << std::endl;
-        return 1;
-    }
-}
+int returnOnException(std::function<int(void)> f);
 
 class OpenDirException : public std::runtime_error
 {

@@ -30,4 +30,15 @@ std::string getCwd()
 
     return retStr;
 }
+
+int returnOnException(std::function<int(void)> f) {
+    try {
+        return f();
+    }
+    catch(...) {
+        std::exception_ptr e = std::current_exception();
+        std::cerr <<(e ? e.__cxa_exception_type()->name() : "null") << std::endl;
+        return 1;
+    }
+}
 }
