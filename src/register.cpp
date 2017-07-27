@@ -95,8 +95,7 @@ void listenForMessages(APIState* state,
             throw MulticastMessageIgnoredException("Received PROC_CN_MCAST_IGNORE");
     }
 
-    printf("Reading process events from proc connector.\n"
-            "Hit Ctrl-C to exit\n");
+    printf("Reading process events from proc connector.\n");
 
     for(memset(buff, 0, sizeof(buff)), from_nla_len = sizeof(from_nla);
         ; memset(buff, 0, sizeof(buff)), from_nla_len = sizeof(from_nla)) {
