@@ -55,7 +55,7 @@ namespace {
             //
             //TODO: fix this race condition...
             sleep(1);
-            execl(path, (const char*)nullptr, (char*)nullptr);
+            execl(path, path, (char*)nullptr);
 
         } else if(pid > 0) {
             //parent should assert the program was launched
