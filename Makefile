@@ -1,14 +1,14 @@
 LIBTIMETRACKER_ARGS=-DCMAKE_BUILD_TYPE=Debug
 HERE=`pwd`
 
-.PHONY: .all
-.all: cabalbuild
+.PHONY: all
+all: cabalbuild
 
 .PHONY: mklibtimetrackerbin
 mklibtimetrackerbin:
 	mkdir -p libtimetracker/bin
 
-.PHONY: mklibtimetracker
+.PHONY: cmakelibtimetracker
 cmakelibtimetracker: mklibtimetrackerbin
 	cd libtimetracker/bin && cmake $(LIBTIMETRACKER_ARGS) .. 
 
@@ -18,7 +18,7 @@ mklibtimetracker: cmakelibtimetracker
 
 .PHONY: libtimetrackerclean
 libtimetrackerclean:
-	cd libtimetracker/bin && make clean
+	rm -r -f libtimetracker/bin/*
 
 .PHONY: cabalconf
 cabalconf: mklibtimetracker
