@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <dirent.h>
 
+namespace ptimetracker {
 bool dirExists(std::string dirName)
 {
     DIR* dir = opendir(dirName.c_str());
@@ -28,4 +29,5 @@ std::string getCwd()
     delete[] cwd;
 
     return retStr;
+}
 }

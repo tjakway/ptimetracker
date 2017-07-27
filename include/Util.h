@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <memory>
 #include <utility>
+#include <iostream>
 
 
 //exception-handling macros
@@ -18,14 +19,18 @@
     };
 
 
-#define RETURN_ON_ERROR(A) try { \
-        A \
-    }  \
-    catch(...) { \
-        std::exception_ptr e = std::current_exception(); \
-        std::cerr <<(e ? e.__cxa_exception_type()->name() : "null") << std::endl; \
-        return 1; \
+namespace ptimetracker {
+
+int returnOnError(std::function<int(void)> f) {
+    try {
+        return f();
     }
+    catch(...) {
+        std::exception_ptr e = std::current_exception();
+        std::cerr <<(e ? e.__cxa_exception_type()->name() : "null") << std::endl;
+        return 1;
+    }
+}
 
 class OpenDirException : public std::runtime_error
 {
@@ -39,5 +44,6 @@ bool dirExists(std::string);
 
 std::string getCwd();
 
+}
 
 #endif
