@@ -22,6 +22,7 @@ extern "C" {
 #endif
 
     enum ProcMatchEventType {
+        NO_EVENT=-1,
         PROC_START=1,
         PROC_END=2
     };
