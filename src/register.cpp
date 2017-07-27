@@ -150,7 +150,7 @@ namespace {
 extern "C" {
     int listenForMessagesForever(void* state) 
     {
-        ptimetracker::returnOnException([&]() {
+        return ptimetracker::returnOnException([=]() {
             auto shouldContinue = [](ptimetracker::APIState* a, cn_msg* b) { return true; };
             
 
@@ -162,7 +162,7 @@ extern "C" {
 
     int listenUntilElapsed(void* state, unsigned long millis)
     {
-        ptimetracker::returnOnException([&]() {
+        return ptimetracker::returnOnException([=]() {
             //get current time & cast -> milliseconds using std::chrono functions
             const auto nowInMillis = []() {
                     return std::chrono::duration_cast<std::chrono::milliseconds>
