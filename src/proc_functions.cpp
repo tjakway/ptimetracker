@@ -13,19 +13,6 @@
 
 
 namespace {
-    std::string readFile(std::string inFileName)
-    {
-        //see https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
-
-        std::ifstream inFile;
-        //open the input file
-        inFile.open(inFileName);
-
-        std::stringstream strStream;
-        strStream << inFile.rdbuf();//read the file
-        return strStream.str();//str holds the content of the file
-        //destructor will close the file
-    }
 
     //see https://stackoverflow.com/questions/6159665/a-standard-way-in-c-to-define-an-exception-class-and-to-throw-exceptions
     class RealpathException : public std::runtime_error
@@ -129,6 +116,7 @@ namespace ptimetracker {
             info->cmdLine = std::unique_ptr<std::string>(new std::string(cmdLine));
         }
 
+        std::cerr << "ProcInfo::readCmdLine(" << pid << "): " << cmdLine << std::endl;
         return cmdLine;
     }
 
@@ -145,6 +133,7 @@ namespace ptimetracker {
             info->procName = std::unique_ptr<std::string>(new std::string(procName));
         }
 
+        std::cerr << "ProcInfo::readProcName(" << pid << "): " << procName << std::endl;
         return procName;
     }
 
@@ -169,6 +158,8 @@ namespace ptimetracker {
 
         //realpath will allocate a c string when the 2nd arg is NULL
         free(allocedPath);
+
+        std::cerr << "ProcInfo::readCwd(" << pid << "): " << absCwd << std::endl;
         return absCwd;
     }
 

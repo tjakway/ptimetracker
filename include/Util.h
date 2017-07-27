@@ -22,6 +22,9 @@
 
 namespace ptimetracker {
 
+
+std::string readFile(std::string);
+
 int returnOnException(std::function<int(void)> f);
 
 class OpenDirException : public std::runtime_error
