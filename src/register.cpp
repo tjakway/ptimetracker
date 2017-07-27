@@ -137,22 +137,18 @@ namespace {
     static std::function<void(void*, cn_msg*)> handleMsgCallback = handle_msg;
 }
 
+
 extern "C" {
     int listenForMessagesForever(void* state) 
     {
-        try {
+        RETURN_ON_ERROR( {
             auto shouldContinue = [](ptimetracker::APIState* a, cn_msg* b) { return true; };
             
 
             listenForMessages((ptimetracker::APIState*)state,
                     shouldContinue, handleMsgCallback);
             return 0;
-        }
-        catch(...) {
-            std::exception_ptr e = std::current_exception();
-            std::cerr <<(e ? e.__cxa_exception_type()->name() : "null") << std::endl;
-            return 1;
-        }
+        })
     }
 
     void listenUntilElapsed(void* state, unsigned long millis)
