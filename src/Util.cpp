@@ -1,16 +1,21 @@
 #include "Util.h"
+#include "proc_functions.hpp"
 
 #include <regex>
 #include <string>
 #include <fstream>
+#include <iostream>
+#include <limits>
 
 #include <sys/types.h>
 #include <unistd.h>
 #include <dirent.h>
 
-namespace ptimetracker {
+namespace {
+    static std::regex matchNewlines(R"rgx(\n)rgx", ptimetracker::ProcMatcher::REGEX_FLAGS);
+}
 
-NEW_EXCEPTION_TYPE(ReadFileException)
+namespace ptimetracker {
 
 std::string readFile(std::string inFileName)
 {
@@ -19,29 +24,25 @@ std::string readFile(std::string inFileName)
     //open the input file
     ifs.open(inFileName);
 
+    //don't read it if it doesn't exist
+    if(!ifs.good())
+    {
+        std::clog << "Warning: reading empty file " << inFileName << std::endl;
+        return std::string();
+    }
 
-    //see http://www.cplusplus.com/reference/fstream/ifstream/rdbuf/
-    //get pointer to associated buffer object
-    std::filebuf* pbuf = ifs.rdbuf();
-
-    //get file size using buffer's members
-    std::size_t size = pbuf->pubseekoff (0,ifs.end,ifs.in);
-    pbuf->pubseekpos (0,ifs.in);
-
-    //allocate memory to contain file data
-    char* buffer=new char[size];
-
-    //get file data
-    pbuf->sgetn (buffer,size);
-
-    ifs.close();
-
-    std::string retStr(buffer);
-    delete[] buffer;
-
-    return retStr;
+    std::stringstream strStream;
+    strStream << ifs.rdbuf();
+    auto retStr = strStream.str();
+    if(retStr.empty())
+        std::clog << "Warning: reading empty file " << inFileName << std::endl;
+    return stripNewlines(retStr);
 }
 
+std::string stripNewlines(std::string in)
+{
+    return std::regex_replace(in, matchNewlines, "");
+}
 
 bool dirExists(std::string dirName)
 {

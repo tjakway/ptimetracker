@@ -24,6 +24,7 @@ namespace ptimetracker {
 
 
 std::string readFile(std::string);
+std::string stripNewlines(std::string);
 
 int returnOnException(std::function<int(void)> f);
 
