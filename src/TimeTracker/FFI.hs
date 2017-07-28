@@ -60,6 +60,8 @@ foreign import ccall "wrapper"
     wrapStopListeningCallback :: StopListeningCallback -> IO (StopListeningCallbackFunPtr)
 
 
+-- TODO: work this into the FFI
+
 --matches the C enum of the same name
 data ProcMatchEventType = NoEvent 
                         | ProcStart 

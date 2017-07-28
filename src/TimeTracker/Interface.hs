@@ -32,6 +32,8 @@ boolToCInt False = 0
 --TODO: maybe compose with a function to turn the CInt return types ->
 --a haskell data type indicating status?
 
+-- TODO: make the strings optional then pass nullPtr if either are Nothing
+
 addProcMatcher :: FFI.EventCallback -> String -> Bool -> String -> ProgramLoggerM ()
 addProcMatcher callback procRegex matchOnlyProgName cwdRegex = do
         fPtr <- newEventCallback callback
