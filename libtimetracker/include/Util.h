@@ -9,18 +9,17 @@
 #include <regex>
 
 
-//exception-handling macros
-#define NEW_EXCEPTION_TYPE(A) \
-    class A : public std::runtime_error \
-    { \
-    public: \
-        A(std::string const& message) \
-            : std::runtime_error(message) \
-        {} \
-    };
-
-
 namespace ptimetracker {
+
+class TimeTrackerException : public std::runtime_error
+{
+public:
+    virtual std::string getExceptionTypeName() = 0;
+
+    TimeTrackerException(std::string const& message)
+        : std::runtime_error(message)
+    {}
+};
 
 
 std::string readFile(std::string);
@@ -45,5 +44,18 @@ bool regexMatch(std::string, std::regex);
 bool regexMatch(const char*, std::regex);
 
 }
+
+
+//exception-handling macros
+#define NEW_EXCEPTION_TYPE(A) \
+    class A : public ptimetracker::TimeTrackerException \
+    { \
+    public: \
+        virtual std::string getExceptionTypeName() { return "A"; } \
+            \
+        A(std::string const& message) \
+            : ptimetracker::TimeTrackerException(message) \
+        {} \
+    };
 
 #endif

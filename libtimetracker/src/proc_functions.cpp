@@ -15,14 +15,7 @@
 namespace {
 
     //see https://stackoverflow.com/questions/6159665/a-standard-way-in-c-to-define-an-exception-class-and-to-throw-exceptions
-    class RealpathException : public std::runtime_error
-    {
-    public:
-        RealpathException(std::string const& message)
-            : std::runtime_error(message + " Was thrown")
-        {}
-    };
-
+    NEW_EXCEPTION_TYPE(RealpathException);
 }
 
 namespace ptimetracker {

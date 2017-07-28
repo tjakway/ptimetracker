@@ -74,6 +74,10 @@ int returnOnException(std::function<int(void)> f) {
     try {
         return f();
     }
+    catch(TimeTrackerException& e) {
+        std::cerr << "Caught exception of type " << e.getExceptionTypeName() << "\twhat: " << e.what() << std::endl;
+        return 1;
+    }
     catch(...) {
         std::exception_ptr e = std::current_exception();
         std::cerr <<(e ? e.__cxa_exception_type()->name() : "null") << std::endl;
