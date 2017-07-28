@@ -21,11 +21,11 @@ emptyProgramLoggerS = ProgramLoggerS {
 
 -- Adapted from the LlvmM monad in GHC
 -- see compiler/llvmGen/LlvmCodeGen/Base.hs
-newtype ProgramLoggerM a = ProgramLoggerM { runProgramLoggerM :: ProgramLoggerS -> IO (a, ProgramLoggerS) }
+newtype ProgramLoggerM a = ProgramLoggerM { runProgramLoggerM' :: ProgramLoggerS -> IO (a, ProgramLoggerS) }
 
 instance Functor ProgramLoggerM where
     fmap f m = ProgramLoggerM $ \s -> do 
-            (x, s') <- runProgramLoggerM m s
+            (x, s') <- runProgramLoggerM' m s
             return (f x, s')
 
 instance Applicative ProgramLoggerM where
@@ -35,8 +35,8 @@ instance Applicative ProgramLoggerM where
 instance Monad ProgramLoggerM where
     return = pure
     m >>= f  = ProgramLoggerM $ \s -> do 
-                (x, s') <- runProgramLoggerM m s 
-                runProgramLoggerM (f x) s'
+                (x, s') <- runProgramLoggerM' m s 
+                runProgramLoggerM' (f x) s'
 
 getState :: ProgramLoggerM ProgramLoggerS
 getState = ProgramLoggerM $ \s -> return (s, s)
@@ -50,13 +50,19 @@ cleanupProgramLogger = ProgramLoggerM $ \s -> do
         mapM_ freeHaskellFunPtr (stopListeningCallbacks s)
         return ((), s)
 
-{-runProgramLogger :: ProgramLoggerM a -> IO a
-runProgramLogger stateAction = do
+
+
+-- | probably only used for debugging since the final logger state isn't
+-- useful
+execProgramLogger :: ProgramLoggerM a -> IO (a, ProgramLoggerS)
+execProgramLogger stateAction = do
         apiStatePtr <- initializeAPIState
 
         let start = emptyProgramLoggerS { apiState = apiStatePtr }
-            (res, finalState) = runState stateAction start
+            stateAction' = stateAction >>= (\x -> cleanupProgramLogger >> return x)
+        (res, finalState) <- runProgramLoggerM' stateAction' start
 
-        cleanupProgramLogger finalState
-        return res
-        -}
+        return (res, finalState)
+
+runProgramLogger :: ProgramLoggerM a -> IO a
+runProgramLogger x = (execProgramLogger x) >>= (\(a, _) -> return a)
