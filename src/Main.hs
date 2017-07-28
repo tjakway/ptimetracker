@@ -1,6 +1,8 @@
 module Main where
 
-import TimeTracker.FFI
+import Data.IORef
+import TimeTracker.Interface
+import TimeTracker.Types
 
 
 main :: IO ()
@@ -11,12 +13,12 @@ main = let eventCallback pid _ = putStrLn ("PID called from Haskell: " ++ (show 
         in do
             putStrLn "Haskell main started"
             counter <- newIORef 0
-            let listenUntilCallback' = do
-                modifyIORef' counter (+1)
-                count <- readIORef counter
-                putStrLn ("listenUntilCallback' called, count is " ++ (show count))
-                if count > 5 then False
-                             else True
+            let continueCallback = \_ -> do
+                    modifyIORef' counter (+1)
+                    count <- readIORef counter
+                    putStrLn ("listenUntilCallback' called, count is " ++ (show count))
+                    if count > 5 then return (boolToCInt False)
+                                 else return (boolToCInt True)
 
-            runProgramLogger procM
-            return ()
+            res <- runProgramLogger (procM >> listenUntilCallback continueCallback)
+            putStrLn $ "res = " ++ (show res)
