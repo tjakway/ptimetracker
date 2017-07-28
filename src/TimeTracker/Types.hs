@@ -41,6 +41,12 @@ instance Monad ProgramLoggerM where
 getState :: ProgramLoggerM ProgramLoggerS
 getState = ProgramLoggerM $ \s -> return (s, s)
 
+getAPIState :: ProgramLoggerM APIStatePtr
+getAPIState = apiState <$> getState
+
+
+liftS :: IO a -> ProgramLoggerM a
+liftS f = ProgramLoggerM $ \s -> f >>= (\a -> return (a, s))
 
 cleanupProgramLogger :: ProgramLoggerM ()
 cleanupProgramLogger = ProgramLoggerM $ \s -> do
@@ -66,3 +72,5 @@ execProgramLogger stateAction = do
 
 runProgramLogger :: ProgramLoggerM a -> IO a
 runProgramLogger x = (execProgramLogger x) >>= (\(a, _) -> return a)
+
+

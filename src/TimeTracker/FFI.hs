@@ -4,10 +4,14 @@ import Foreign.C.Types
 import Foreign.C.String
 import Foreign.Ptr
 
+type CBool = CInt
+
+type EventCallback = CInt -> CInt -> IO ()
+
 --type synonyms, as defined in APIState.h
 type EventCallbackFunPtr = FunPtr (CInt -> CInt -> IO ())
 type ErrorCallbackFunPtr = FunPtr (CString -> IO ())
-type StopListeningCallback = FunPtr (Ptr CInt -> IO (Bool))
+type StopListeningCallback = FunPtr (Ptr CInt -> IO (CBool))
 
 type APIStatePtr = Ptr ()
 type PidT = CInt
@@ -41,6 +45,16 @@ foreign import ccall "APIState.h listenUntilElapsed"
 
 foreign import ccall "APIState.h listenUntilCallback"
     listenUntilCallback :: APIStatePtr -> StopListeningCallback -> IO (CInt)
+
+foreign import ccall "wrapper"
+    wrapEventCallback :: (CInt -> CInt -> IO ()) -> IO (FunPtr (CInt -> CInt -> IO ()))
+
+foreign import ccall "wrapper"
+    wrapErrorCallback :: (CString -> IO ()) -> IO (FunPtr (CString -> IO ()))
+
+foreign import ccall "wrapper"
+    wrapStopListeningCallback :: (Ptr CInt -> IO (CBool)) -> IO (FunPtr (Ptr CInt -> IO (CBool)))
+
 
 --matches the C enum of the same name
 data ProcMatchEventType = NoEvent 

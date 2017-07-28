@@ -48,5 +48,5 @@ Library
   ghc-options:         -Wall -fwarn-tabs -fwarn-incomplete-record-updates -fwarn-unused-do-bind -fwarn-incomplete-uni-patterns
   build-depends:       base >= 4.7, mtl
   
-  exposed-modules: TimeTracker.FFI, TimeTracker.Types
+  exposed-modules: TimeTracker.FFI, TimeTracker.Types, TimeTracker.Interface
   extra-libraries: stdc++ timetracker
