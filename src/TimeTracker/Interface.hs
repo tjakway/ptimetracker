@@ -5,6 +5,7 @@ import qualified TimeTracker.FFI as FFI
 import TimeTracker.Types
 import Foreign.C.Types
 import Foreign.C.String
+import Foreign.Marshal.Alloc (free)
 import Foreign.Ptr (freeHaskellFunPtr, nullPtr)
 
 newEventCallback :: FFI.EventCallback -> ProgramLoggerM FFI.EventCallbackFunPtr
@@ -26,8 +27,9 @@ addProcMatcher callback procRegex matchOnlyProgName cwdRegex = do
         fPtr <- newEventCallback callback
         (procRegexCStr, matchOnlyProgName', cwdRegexCStr) <- marshall
         sPtr <- getAPIState
-        liftS $ FFI.addProcMatcher sPtr fPtr procRegexCStr matchOnlyProgName' cwdRegexCStr
-        -- XXX: delete CStrings
+        liftS $ (FFI.addProcMatcher sPtr fPtr procRegexCStr matchOnlyProgName' cwdRegexCStr 
+                >> free procRegexCStr
+                >> free cwdRegexCStr)
 
     where marshall :: ProgramLoggerM (CString, CInt, CString)
           marshall = ProgramLoggerM $ \s -> do
