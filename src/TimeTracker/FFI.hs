@@ -8,10 +8,14 @@ type CBool = CInt
 
 type EventCallback = CInt -> CInt -> IO ()
 
+-- TODO: write wrapper functions for StopListeningCallback
+-- so we can inspect the Ptr () -- which is a cn_msg* 
+type StopListeningCallback = Ptr () -> IO (CBool)
+
 --type synonyms, as defined in APIState.h
-type EventCallbackFunPtr = FunPtr (CInt -> CInt -> IO ())
+type EventCallbackFunPtr = FunPtr (EventCallback)
 type ErrorCallbackFunPtr = FunPtr (CString -> IO ())
-type StopListeningCallback = FunPtr (Ptr CInt -> IO (CBool))
+type StopListeningCallbackFunPtr = FunPtr (StopListeningCallback)
 
 type APIStatePtr = Ptr ()
 type PidT = CInt
@@ -44,7 +48,7 @@ foreign import ccall "APIState.h listenUntilElapsed"
     listenUntilElapsed :: APIStatePtr -> CULong -> IO (CInt)
 
 foreign import ccall "APIState.h listenUntilCallback"
-    listenUntilCallback :: APIStatePtr -> StopListeningCallback -> IO (CInt)
+    listenUntilCallback :: APIStatePtr -> StopListeningCallbackFunPtr -> IO (CInt)
 
 foreign import ccall "wrapper"
     wrapEventCallback :: (CInt -> CInt -> IO ()) -> IO (FunPtr (CInt -> CInt -> IO ()))
@@ -53,7 +57,7 @@ foreign import ccall "wrapper"
     wrapErrorCallback :: (CString -> IO ()) -> IO (FunPtr (CString -> IO ()))
 
 foreign import ccall "wrapper"
-    wrapStopListeningCallback :: (Ptr CInt -> IO (CBool)) -> IO (FunPtr (Ptr CInt -> IO (CBool)))
+    wrapStopListeningCallback :: StopListeningCallback -> IO (StopListeningCallbackFunPtr)
 
 
 --matches the C enum of the same name

@@ -7,7 +7,7 @@ import Control.Monad
 data ProgramLoggerS = ProgramLoggerS {
                     eventCallbacks :: [EventCallbackFunPtr],
                     errorCallbacks :: [ErrorCallbackFunPtr],
-                    stopListeningCallbacks :: [StopListeningCallback],
+                    stopListeningCallbacks :: [StopListeningCallbackFunPtr],
                     apiState :: APIStatePtr
                     }
 
