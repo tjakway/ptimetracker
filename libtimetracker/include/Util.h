@@ -45,17 +45,26 @@ bool regexMatch(const char*, std::regex);
 
 }
 
+//stringification macros
+//see https://stackoverflow.com/questions/2653214/stringification-of-a-macro-value
+//DON'T name it str() or there WILL be name conflicts!
+//any name that no one would write in a regular C/C++ file will do...
+#define XSTRINGIFY_MACRO__(a) STRINGIFY_MACRO__(a)
+#define STRINGIFY_MACRO__(a) #a
 
 //exception-handling macros
 #define NEW_EXCEPTION_TYPE(A) \
     class A : public ptimetracker::TimeTrackerException \
     { \
     public: \
-        virtual std::string getExceptionTypeName() { return "A"; } \
+        virtual std::string getExceptionTypeName() { return XSTRINGIFY_MACRO__(A); } \
             \
         A(std::string const& message) \
             : ptimetracker::TimeTrackerException(message) \
         {} \
     };
+
+#undef xstr
+#undef str
 
 #endif
