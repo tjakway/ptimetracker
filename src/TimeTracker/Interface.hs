@@ -5,6 +5,7 @@ import qualified TimeTracker.FFI as FFI
 import TimeTracker.Types
 import Foreign.C.Types
 import Foreign.C.String
+import Foreign.Ptr
 import Foreign.Marshal.Alloc (free)
 
 newEventCallback :: FFI.EventCallback -> ProgramLoggerM FFI.EventCallbackFunPtr
@@ -33,7 +34,7 @@ boolToCInt False = 0
 
 -- TODO: make the strings optional then pass nullPtr if either are Nothing
 
-addProcMatcher :: EventCallback -> String -> Bool -> String -> ProgramLoggerM ()
+addProcMatcher :: FFI.EventCallback -> String -> Bool -> String -> ProgramLoggerM ()
 addProcMatcher callback procRegex matchOnlyProgName cwdRegex = do
         fPtr <- newEventCallback callback
         (procRegexCStr, matchOnlyProgName', cwdRegexCStr) <- marshall
@@ -67,16 +68,21 @@ listenUntilElapsed t = do
 
 data ProcEventData = Other
                    | NoEvent
-                   | ProcStart PidT 
-                   | ProcEnd ExitCode
+                   | ProcStart FFI.PidT 
+                   | ProcEnd FFI.ExitCode
 
 getProcEventData :: Ptr () -> IO (Maybe ProcEventData)
 getProcEventData cnHdr
                 | cnHdr == nullPtr = return Nothing
                 | otherwise = do
-                        eventType <- FFI.cnMsgGetProcMatchEventType cnHdr
-                        case eventType of
-                            Other     -> return Other
-                            NoEvent   -> return NoEvent 
-                            ProcStart -> cnMsgGetProcessPid cnHdr >>= (return . ProcStart)
-                            ProcEnd   -> cnMsgGetExitCode cnHdr >>= (return . ProcEnd)
+                        maybeEventType <- FFI.intToProcMatchEventType <$> 
+                                            FFI.cnMsgGetProcMatchEventType cnHdr
+                        case maybeEventType of
+                            Just e ->  Just <$> unpack e
+                            Nothing -> return Nothing
+
+    where unpack e = case e of
+                        FFI.Other     -> return Other
+                        FFI.NoEvent   -> return NoEvent 
+                        FFI.ProcStart -> FFI.cnMsgGetProcessPid cnHdr >>= (return . ProcStart)
+                        FFI.ProcEnd   -> FFI.cnMsgGetExitCode cnHdr >>= (return . ProcEnd)
