@@ -24,12 +24,12 @@ class ProcMatcher
     std::unique_ptr<std::regex> procRegex, cwdRegex;
     const bool matchOnlyProgName;
 
-    bool procMatches(pid_t, ProcInfo*);
-    bool cwdMatches(pid_t, ProcInfo*);
+    bool procMatches(void*, pid_t, ProcInfo*);
+    bool cwdMatches(void*, pid_t, ProcInfo*);
 
     EventCallback eventCallback;
 
-    bool matches(pid_t, ProcInfo*);
+    bool matches(void*, pid_t, ProcInfo*);
 
 public:
     ProcMatcher(EventCallback eventCallback, const char* procRegexStr, bool matchOnlyProgName, const char* cwdRegexStr);
@@ -37,7 +37,7 @@ public:
     /**
      * runs the saved callback if it matches this PID
      */
-    void execMatch(pid_t, ProcMatchEventType, ProcInfo* info = nullptr);
+    void execMatch(void*, pid_t, ProcMatchEventType, ProcInfo* info = nullptr);
 
     static const std::regex::flag_type REGEX_FLAGS;
 };
@@ -47,9 +47,9 @@ class ProcInfo
 {
     static void checkRealpathErrno(char* allocedPath);
 public:
-    static std::string readCmdLine(pid_t pid, ProcInfo* info = nullptr);
-    static std::string readProcName(pid_t pid, ProcInfo* info = nullptr);
-    static std::string readCwd(pid_t pid, ProcInfo* info = nullptr);
+    static std::string readCmdLine(void* state, pid_t pid, ProcInfo* info = nullptr);
+    static std::string readProcName(void* state, pid_t pid, ProcInfo* info = nullptr);
+    static std::string readCwd(void* state, pid_t pid, ProcInfo* info = nullptr);
 
     std::unique_ptr<std::string> cmdLine, procName, cwd;
 };

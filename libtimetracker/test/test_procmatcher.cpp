@@ -37,6 +37,8 @@ TEST(RegexTests, matchBinTrue)
 
 TEST(pTimeTrackerTests, testCwd)
 {
+    void* state = initializeAPIState();
+
     pid_t pid = fork();
     if(pid == -1) {
         std::cerr << "Error in fork, pid = -1" << std::endl;
@@ -50,11 +52,11 @@ TEST(pTimeTrackerTests, testCwd)
         pid_t child = pid;
 
         //run assertions
-        auto childCwd = ProcInfo::readCwd(child);
+        auto childCwd = ProcInfo::readCwd(state, child);
 
         ASSERT_TRUE(dirExists(childCwd));
         ASSERT_TRUE(childCwd == getCwd());
-        ASSERT_TRUE(childCwd == ProcInfo::readCwd(getpid()));
+        ASSERT_TRUE(childCwd == ProcInfo::readCwd(state, getpid()));
 
         //signal the child process to continue
         //it will exit normally

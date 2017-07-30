@@ -36,47 +36,48 @@ namespace ptimetracker {
         }
     }
 
-    bool ProcMatcher::procMatches(pid_t pid, ProcInfo* info)
+    bool ProcMatcher::procMatches(void* state, pid_t pid, ProcInfo* info)
     {
         if(procRegex.get() == nullptr) {
             return true;
         }
         else {
-            const auto progName = ProcInfo::readProcName(pid, info);
+            const auto progName = ProcInfo::readProcName(state, pid, info);
 
             //check whether we're testing just the program name or the entire invocation
             if(matchOnlyProgName) {
                 return regexMatch(progName, *procRegex);
             }
             else {
-                const auto fullCmdLine = progName + " " + ProcInfo::readCmdLine(pid, info);
+                const auto fullCmdLine = progName + " " + 
+                    ProcInfo::readCmdLine(state, pid, info);
                 return regexMatch(fullCmdLine, *procRegex);
             }
         }
     }
 
-    bool ProcMatcher::cwdMatches(pid_t pid, ProcInfo* info)
+    bool ProcMatcher::cwdMatches(void* state, pid_t pid, ProcInfo* info)
     {
         if(cwdRegex.get() == nullptr) {
             return true;
         }
         else {
-            return regexMatch(ProcInfo::readCwd(pid), *cwdRegex);
+            return regexMatch(ProcInfo::readCwd(state, pid), *cwdRegex);
         }
     }
 
 
-    bool ProcMatcher::matches(pid_t pid, ProcInfo* info)
+    bool ProcMatcher::matches(void* state, pid_t pid, ProcInfo* info)
     {
-        return procMatches(pid, info) && cwdMatches(pid, info);
+        return procMatches(state, pid, info) && cwdMatches(state, pid, info);
     }
 
     /**
      * optionally takes a pointer to cache state
      */
-    void ProcMatcher::execMatch(pid_t pid, ProcMatchEventType eventType, ProcInfo* info)
+    void ProcMatcher::execMatch(void* state, pid_t pid, ProcMatchEventType eventType, ProcInfo* info)
     {
-        if(matches(pid, info)) {
+        if(matches(state, pid, info)) {
             eventCallback(pid, eventType);
         }
     }
@@ -91,7 +92,7 @@ namespace ptimetracker {
         }
     }
 
-    std::string ProcInfo::readCmdLine(pid_t pid, ProcInfo* info)
+    std::string ProcInfo::readCmdLine(void* state, pid_t pid, ProcInfo* info)
     {
         if(info != nullptr && info->cmdLine.get() != nullptr) {
             return *info->cmdLine;
@@ -109,11 +110,10 @@ namespace ptimetracker {
             info->cmdLine = std::unique_ptr<std::string>(new std::string(cmdLine));
         }
 
-        std::cerr << "ProcInfo::readCmdLine(" << pid << "): " << cmdLine << std::endl;
         return cmdLine;
     }
 
-    std::string ProcInfo::readProcName(pid_t pid, ProcInfo* info)
+    std::string ProcInfo::readProcName(void* state, pid_t pid, ProcInfo* info)
     {
         //check cache
         if(info != nullptr && info->procName.get() != nullptr) {
@@ -126,11 +126,10 @@ namespace ptimetracker {
             info->procName = std::unique_ptr<std::string>(new std::string(procName));
         }
 
-        std::cerr << "ProcInfo::readProcName(" << pid << "): " << procName << std::endl;
         return procName;
     }
 
-    std::string ProcInfo::readCwd(pid_t pid, ProcInfo* info)
+    std::string ProcInfo::readCwd(void* state, pid_t pid, ProcInfo* info)
     {
         //check cache
         if(info != nullptr && info->cwd.get() != nullptr) {
@@ -140,19 +139,31 @@ namespace ptimetracker {
         //use realpath to read the destination of the symlink as an absolute path
         std::string cwdPath = "/proc/" + std::to_string(pid) + "/cwd";
 
-        char* allocedPath = realpath(cwdPath.c_str(), nullptr);
-        checkRealpathErrno(allocedPath);
+        std::string absCwd;
+        char* allocedPath = nullptr;
+        try {
+            allocedPath = realpath(cwdPath.c_str(), nullptr);
+            checkRealpathErrno(allocedPath);
 
-        std::string absCwd = allocedPath;
+            absCwd = allocedPath;
+            if(info != nullptr) {
+                info->cwd = std::unique_ptr<std::string>(new std::string(absCwd));
+            }
 
-        if(info != nullptr) {
-            info->cwd = std::unique_ptr<std::string>(new std::string(absCwd));
+        } catch(RealpathException const& e)
+        {
+            auto msg = "Caught RealpathException in " + std::string(__func__)
+                    + ", returning empty string";
+            apiWriteErr(state, msg.c_str());
+            absCwd = "";
         }
 
         //realpath will allocate a c string when the 2nd arg is NULL
-        free(allocedPath);
+        if(allocedPath != nullptr)
+        {
+            free(allocedPath);
+        }
 
-        std::cerr << "ProcInfo::readCwd(" << pid << "): " << absCwd << std::endl;
         return absCwd;
     }
 

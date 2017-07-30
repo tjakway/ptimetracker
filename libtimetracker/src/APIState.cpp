@@ -121,7 +121,7 @@ extern "C" {
         ptimetracker::ProcInfo info;
 
         for(ptimetracker::ProcMatcher& m : s->regexes) {
-            m.execMatch(pid, eventType, &info);
+            m.execMatch(state, pid, eventType, &info);
         }
     }
 
