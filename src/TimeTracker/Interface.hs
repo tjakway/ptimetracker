@@ -6,7 +6,6 @@ import TimeTracker.Types
 import Foreign.C.Types
 import Foreign.C.String
 import Foreign.Marshal.Alloc (free)
-import Foreign.Ptr (freeHaskellFunPtr, nullPtr)
 
 newEventCallback :: FFI.EventCallback -> ProgramLoggerM FFI.EventCallbackFunPtr
 newEventCallback f = ProgramLoggerM $ \s -> do
