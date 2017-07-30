@@ -7,10 +7,20 @@
 #include <algorithm>
 #include <mutex>
 
-#include <unistd.h>
 #include <cstdlib>
 #include <cstring>
 #include <errno.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
+
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <linux/connector.h>
+#include <linux/netlink.h>
+#include <linux/cn_proc.h>
 
 namespace ptimetracker {
 
@@ -114,27 +124,29 @@ void cnMsgCheckNull(cn_msg* p, const char* funcName)
     {
         throw CnMsgNullPointer("null cn_msg* in " + fName);
     }
-    if(p->what == nullptr)
+
+    proc_event *ev = (struct proc_event*)p->data;
+    if(ev == nullptr)
     {
-        throw CnMsgNullPointer("null cn_msg->what in " + fName);
+        throw CnMsgNullPointer("null cn_msg->data in " + fName);
     }
 }
 
 const char* cnMsgProcEventStr(cn_msg* cn_hdr)
 {
-    cnMsgCheckNull(cn_hdr, __func__);
+    ptimetracker::cnMsgCheckNull(cn_hdr, __func__);
 
-    struct proc_event ev* = (struct proc_event*)cn_hdr->data;
+    proc_event *ev = (struct proc_event*)cn_hdr->data;
     switch(ev->what) {
-	case PROC_EVENT_FORK: 
+        case proc_event::PROC_EVENT_FORK: 
                 return "PROC_EVENT_FORK";
 
-	case PROC_EVENT_EXEC:
+	case proc_event::PROC_EVENT_EXEC:
                 return "PROC_EVENT_EXEC";
-	case PROC_EVENT_EXIT:
+	case proc_event::PROC_EVENT_EXIT:
                 return "PROC_EVENT_EXIT";
 
-	case PROC_EVENT_UID:
+	case proc_event::PROC_EVENT_UID:
                 return "PROC_EVENT_UID";
 	default:
                 return "Unknown";
@@ -224,19 +236,19 @@ extern "C" {
 
     enum ProcMatchEventType cnMsgGetProcMatchEventType(cn_msg* cn_hdr)
     {
-        cnMsgCheckNull(cn_hdr, __func__);
-        struct proc_event ev* = (struct proc_event*)cn_hdr->data;
+        ptimetracker::cnMsgCheckNull(cn_hdr, __func__);
+        struct proc_event *ev = (struct proc_event*)cn_hdr->data;
 
 	switch(ev->what){
-	case PROC_EVENT_FORK: //should we track forks?
+	case proc_event::PROC_EVENT_FORK: //should we track forks?
                 return OTHER;
 
-	case PROC_EVENT_EXEC:
+	case proc_event::PROC_EVENT_EXEC:
                 return PROC_START;
-	case PROC_EVENT_EXIT:
+	case proc_event::PROC_EVENT_EXIT:
                 return PROC_END;
 
-	case PROC_EVENT_UID:
+	case proc_event::PROC_EVENT_UID:
                 return OTHER;
 	default:
                 return OTHER;
@@ -245,35 +257,40 @@ extern "C" {
 
     unsigned int cnMsgGetProcessPid(cn_msg* cn_hdr)
     {
-        cnMsgCheckNull(cn_hdr, __func__);
+        ptimetracker::cnMsgCheckNull(cn_hdr, __func__);
 
-        struct proc_event ev* = (struct proc_event*)cn_hdr->data;
-        if(ev->what == PROC_EVENT_EXEC || ev->what == PROC_EVENT_EXIT)
+        struct proc_event *ev = (struct proc_event*)cn_hdr->data;
+        if(ev->what == proc_event::PROC_EVENT_EXEC)
         {
-            return ev->event_data.process_pid;
+            return ev->event_data.exec.process_pid;
+        }
+        else if(ev->what == proc_event::PROC_EVENT_EXIT)
+        {
+            return ev->event_data.exit.process_pid;
         }
         else
         {
-            auto msg = "Wrong event type.  Expected PROC_EVENT_EXEC or PROC_EVENT_EXIT but" +
-                " got " + std::string(cnMsgProcEventStr(ev->what));
-            throw CnMsgWrongProcEventType(msg)
+            std::string msg = std::string("Wrong event type.  Expected PROC_EVENT_EXEC or PROC_EVENT_EXIT but")
+                + std::string(" got ")
+                + std::string(ptimetracker::cnMsgProcEventStr(cn_hdr));
+            throw ptimetracker::CnMsgWrongProcEventType(msg);
         }
     }
 
     unsigned int cnMsgGetExitCode(cn_msg* cn_hdr)
     {
-        cnMsgCheckNull(cn_hdr);
-        struct proc_event ev* = (struct proc_event*)cn_hdr->data;
+        ptimetracker::cnMsgCheckNull(cn_hdr, __func__);
+        struct proc_event *ev = (struct proc_event*)cn_hdr->data;
 
-        if(ev->what == PROC_EVENT_EXIT)
+        if(ev->what == proc_event::PROC_EVENT_EXIT)
         {
-            return ev->event_data.exit_code;
+            return ev->event_data.exit.exit_code;
         }
         else
         {
-            auto msg = "Wrong event type.  Expected PROC_EVENT_EXIT but" +
-                " got " + std::string(cnMsgProcEventStr(ev->what));
-            throw CnMsgWrongProcEventType(msg)
+            auto msg = std::string("Wrong event type.  Expected PROC_EVENT_EXIT but") +
+                std::string(" got ") + std::string(ptimetracker::cnMsgProcEventStr(cn_hdr));
+            throw ptimetracker::CnMsgWrongProcEventType(msg);
         }
     }
 }

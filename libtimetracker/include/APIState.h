@@ -1,7 +1,16 @@
 #ifndef APISTATE_H
 #define APISTATE_H
 
-#include <sys/types.h> //for pid_t
+#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
+
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <linux/connector.h>
+#include <linux/netlink.h>
+#include <linux/cn_proc.h>
 
 #ifndef __cplusplus
 #include <stdbool.h>
@@ -60,14 +69,14 @@ extern "C" {
     /** note that not all will be valid at once!
      * (depends on cn_hdr->data->what)
      */
-    enum ProcMatchEventType cnMsgGetProcMatchEventType(cn_msg*);
+    enum ProcMatchEventType cnMsgGetProcMatchEventType(struct cn_msg*);
 
     //only used in PROC_EVENT_FORK
 //    unsigned int cnMsgGetParentPid(cn_msg*);
 //    unsigned int cnMsgGetChildPid(cn_msg*);
 
-    unsigned int cnMsgGetProcessPid(cn_msg*);
-    unsigned int cnMsgGetExitCode(cn_msg*);
+    unsigned int cnMsgGetProcessPid(struct cn_msg*);
+    unsigned int cnMsgGetExitCode(struct cn_msg*);
 #ifdef __cplusplus
 }
 #endif
