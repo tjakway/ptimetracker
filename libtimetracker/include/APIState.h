@@ -37,7 +37,10 @@ extern "C" {
         PROC_END=2,
     };
 
-    typedef void (*EventCallback)(int, enum ProcMatchEventType);
+    /**
+     * pass the pid, event type, and program name
+     */
+    typedef void (*EventCallback)(int, enum ProcMatchEventType, const char*);
     typedef void (*ErrorCallback)(const char*);
 
     void addProcMatcher(void* state, EventCallback eventCallback,

@@ -31,7 +31,8 @@ namespace {
     pid_t callbackPid = -1;
     ProcMatchEventType callbackEventType = NO_EVENT;
 
-    void eventCallback(int pid, ProcMatchEventType eventType)
+    //TODO: incorporate progName
+    void eventCallback(int pid, ProcMatchEventType eventType, const char* progName)
     {
         if(callbackPid == -1)
         {

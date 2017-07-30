@@ -12,14 +12,17 @@ type EventCallback = CInt -> CInt -> CString -> IO ()
 -- so we can inspect the Ptr () -- which is a cn_msg* 
 type StopListeningCallback = Ptr () -> IO (CBool)
 
+type PidT = CInt
+type CProcMatchEventType = CInt
+
+type ExitCode = CInt
+
 --type synonyms, as defined in APIState.h
 type EventCallbackFunPtr = FunPtr (EventCallback)
 type ErrorCallbackFunPtr = FunPtr (CString -> IO ())
 type StopListeningCallbackFunPtr = FunPtr (StopListeningCallback)
 
 type APIStatePtr = Ptr ()
-type PidT = CInt
-type CProcMatchEventType = CInt
 
 -- | returns a void pointer to api state
 foreign import ccall "APIState.h initializeAPIState"
@@ -51,7 +54,7 @@ foreign import ccall "APIState.h listenUntilCallback"
     listenUntilCallback :: APIStatePtr -> StopListeningCallbackFunPtr -> IO (CInt)
 
 foreign import ccall "wrapper"
-    wrapEventCallback :: (CInt -> CInt -> IO ()) -> IO (FunPtr (CInt -> CInt -> IO ()))
+    wrapEventCallback :: (CInt -> CInt -> CString -> IO ()) -> IO (EventCallbackFunPtr)
 
 foreign import ccall "wrapper"
     wrapErrorCallback :: (CString -> IO ()) -> IO (FunPtr (CString -> IO ()))
@@ -65,10 +68,10 @@ foreign import ccall "APIState.h cnMsgGetProcMatchEventType"
     cnMsgGetProcMatchEventType :: Ptr () -> IO CInt
 
 foreign import ccall "APIState.h cnMsgGetProcessPid"
-    cnMsgGetProcessPid :: Ptr () -> IO CUInt
+    cnMsgGetProcessPid :: Ptr () -> IO PidT
 
 foreign import ccall "APIState.h cnMsgGetExitCode"
-    cnMsgGetExitCode :: Ptr () -> IO CUInt
+    cnMsgGetExitCode :: Ptr () -> IO ExitCode
 
 
 -- TODO: work this into the FFI
@@ -89,6 +92,7 @@ intToProcMatchEventType :: CProcMatchEventType -> Maybe ProcMatchEventType
 intToProcMatchEventType i = case i of
                                 -2 -> Just Other
                                 -1 -> Just NoEvent
-                                 1 -> Just ProcStart
-                                 2 -> Just ProcEnd
-                                 _ -> Nothing
+                                1  -> Just ProcStart
+                                2  -> Just ProcEnd
+                                _  -> Nothing
+

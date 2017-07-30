@@ -78,7 +78,15 @@ namespace ptimetracker {
     void ProcMatcher::execMatch(void* state, pid_t pid, ProcMatchEventType eventType, ProcInfo* info)
     {
         if(matches(state, pid, info)) {
-            eventCallback(pid, eventType);
+            if(info->procName.get() != nullptr)
+            {
+                eventCallback(pid, eventType, info->procName.get()->c_str());
+            }
+            else 
+            {
+                std::string procName = ProcInfo::readProcName(state, pid, nullptr);
+                eventCallback(pid, eventType, procName.c_str());
+            }
         }
     }
 
