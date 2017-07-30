@@ -48,6 +48,11 @@ extern "C" {
     int listenUntilElapsed(void*, unsigned long);
     int listenUntilCallback(void*, bool (*callback)(struct cn_msg*));
 
+    void apiSetOutFd(void*, int newFd);
+    void apiSetErrFd(void*, int newFd);
+
+    void apiWriteLog(void*, const char*);
+    void apiWriteErr(void*, const char*);
 #ifdef __cplusplus
 }
 #endif
