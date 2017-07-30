@@ -153,7 +153,7 @@ namespace ptimetracker {
         } catch(RealpathException const& e)
         {
             auto msg = "Caught RealpathException in " + std::string(__func__)
-                    + ", returning empty string";
+                    + ", returning empty string\n";
             apiWriteErr(state, msg.c_str());
             absCwd = "";
         }
