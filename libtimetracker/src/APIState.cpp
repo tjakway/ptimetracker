@@ -103,7 +103,45 @@ public:
 
 };
 
+//cn_msg exceptions
+NEW_EXCEPTION_TYPE(CnMsgWrongProcEventType);
+NEW_EXCEPTION_TYPE(CnMsgNullPointer);
+
+void cnMsgCheckNull(cn_msg* p, const char* funcName)
+{
+    const std::string fName(funcName);
+    if(p == nullptr)
+    {
+        throw CnMsgNullPointer("null cn_msg* in " + fName);
+    }
+    if(p->what == nullptr)
+    {
+        throw CnMsgNullPointer("null cn_msg->what in " + fName);
+    }
 }
+
+const char* cnMsgProcEventStr(cn_msg* cn_hdr)
+{
+    cnMsgCheckNull(cn_hdr, __func__);
+
+    struct proc_event ev* = (struct proc_event*)cn_hdr->data;
+    switch(ev->what) {
+	case PROC_EVENT_FORK: 
+                return "PROC_EVENT_FORK";
+
+	case PROC_EVENT_EXEC:
+                return "PROC_EVENT_EXEC";
+	case PROC_EVENT_EXIT:
+                return "PROC_EVENT_EXIT";
+
+	case PROC_EVENT_UID:
+                return "PROC_EVENT_UID";
+	default:
+                return "Unknown";
+    }
+}
+
+} //namespace ptimetracker
 
 extern "C" {
     //TODO: will bool behave properly in C?  don't need to include <stdbool.h>?
@@ -180,5 +218,62 @@ extern "C" {
     {
         ptimetracker::APIState* state = (ptimetracker::APIState*)s;
         state->writeErr(msg);
+    }
+
+    /** cn_msg* functions **/
+
+    enum ProcMatchEventType cnMsgGetProcMatchEventType(cn_msg* cn_hdr)
+    {
+        cnMsgCheckNull(cn_hdr, __func__);
+        struct proc_event ev* = (struct proc_event*)cn_hdr->data;
+
+	switch(ev->what){
+	case PROC_EVENT_FORK: //should we track forks?
+                return OTHER;
+
+	case PROC_EVENT_EXEC:
+                return PROC_START;
+	case PROC_EVENT_EXIT:
+                return PROC_END;
+
+	case PROC_EVENT_UID:
+                return OTHER;
+	default:
+                return OTHER;
+	}
+    }
+
+    unsigned int cnMsgGetProcessPid(cn_msg* cn_hdr)
+    {
+        cnMsgCheckNull(cn_hdr, __func__);
+
+        struct proc_event ev* = (struct proc_event*)cn_hdr->data;
+        if(ev->what == PROC_EVENT_EXEC || ev->what == PROC_EVENT_EXIT)
+        {
+            return ev->event_data.process_pid;
+        }
+        else
+        {
+            auto msg = "Wrong event type.  Expected PROC_EVENT_EXEC or PROC_EVENT_EXIT but" +
+                " got " + std::string(cnMsgProcEventStr(ev->what));
+            throw CnMsgWrongProcEventType(msg)
+        }
+    }
+
+    unsigned int cnMsgGetExitCode(cn_msg* cn_hdr)
+    {
+        cnMsgCheckNull(cn_hdr);
+        struct proc_event ev* = (struct proc_event*)cn_hdr->data;
+
+        if(ev->what == PROC_EVENT_EXIT)
+        {
+            return ev->event_data.exit_code;
+        }
+        else
+        {
+            auto msg = "Wrong event type.  Expected PROC_EVENT_EXIT but" +
+                " got " + std::string(cnMsgProcEventStr(ev->what));
+            throw CnMsgWrongProcEventType(msg)
+        }
     }
 }

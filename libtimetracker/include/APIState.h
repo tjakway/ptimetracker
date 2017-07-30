@@ -22,9 +22,10 @@ extern "C" {
 #endif
 
     enum ProcMatchEventType {
+        OTHER=-2, //events we don't track
         NO_EVENT=-1,
         PROC_START=1,
-        PROC_END=2
+        PROC_END=2,
     };
 
     typedef void (*EventCallback)(int, enum ProcMatchEventType);
@@ -53,6 +54,20 @@ extern "C" {
 
     void apiWriteLog(void*, const char*);
     void apiWriteErr(void*, const char*);
+
+
+    /** Functions to extract data from cn_msg* **/
+    /** note that not all will be valid at once!
+     * (depends on cn_hdr->data->what)
+     */
+    enum ProcMatchEventType cnMsgGetProcMatchEventType(cn_msg*);
+
+    //only used in PROC_EVENT_FORK
+//    unsigned int cnMsgGetParentPid(cn_msg*);
+//    unsigned int cnMsgGetChildPid(cn_msg*);
+
+    unsigned int cnMsgGetProcessPid(cn_msg*);
+    unsigned int cnMsgGetExitCode(cn_msg*);
 #ifdef __cplusplus
 }
 #endif
