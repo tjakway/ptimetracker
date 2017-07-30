@@ -69,7 +69,7 @@ void listenForMessages(APIState* state,
     cn_hdr = (struct cn_msg *)NLMSG_DATA(nl_hdr);
     mcop_msg = (enum proc_cn_mcast_op*)&cn_hdr->data[0];
 
-    printf("sending proc connector: PROC_CN_MCAST_LISTEN... ");
+    apiWriteLog(state, "sending proc connector: PROC_CN_MCAST_LISTEN... \n");
     memset(buff, 0, sizeof(buff));
     *mcop_msg = (enum proc_cn_mcast_op)PROC_CN_MCAST_LISTEN;
 
@@ -90,12 +90,12 @@ void listenForMessages(APIState* state,
             throw NetlinkSocketException("failed to send proc connector mcast ctl op!");
     }
 
-    printf("sent\n");
+    apiWriteLog(state, "sent\n");
     if (*mcop_msg == PROC_CN_MCAST_IGNORE) {
             throw MulticastMessageIgnoredException("Received PROC_CN_MCAST_IGNORE");
     }
 
-    printf("Reading process events from proc connector.\n");
+    apiWriteLog(state, "Reading process events from proc connector.\n");
 
     for(memset(buff, 0, sizeof(buff)), from_nla_len = sizeof(from_nla);
         ; memset(buff, 0, sizeof(buff)), from_nla_len = sizeof(from_nla)) {
@@ -116,6 +116,7 @@ void listenForMessages(APIState* state,
                     if ((nlh->nlmsg_type == NLMSG_ERROR) ||
                         (nlh->nlmsg_type == NLMSG_OVERRUN))
                             break;
+                    apiWriteLog(state, "Invoking msghandlerCallback...\n");
                     //invoke the callback
                     msgHandlerCallback(state, cn_hdr);
 
@@ -127,6 +128,7 @@ void listenForMessages(APIState* state,
                      * see https://stackoverflow.com/questions/1257744/can-i-use-break-to-exit-multiple-nested-for-loops
                      */
                     if(!shouldContinue(state, cn_hdr)) {
+                        apiWriteLog(state, "shouldContinue returned false\n");
                         goto exit_loop;
                     }
 

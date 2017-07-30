@@ -68,36 +68,47 @@ void handle_msg (void* state, struct cn_msg *cn_hdr)
 		}
 	}
 
+        const unsigned int LOG_BUF_LEN=500;
+        char log[LOG_BUF_LEN];
+
 	switch(ev->what){
 	case PROC_EVENT_FORK:
-		printf("FORK:parent(pid,tgid)=%d,%d\tchild(pid,tgid)=%d,%d\t[%s]\n",
+		snprintf(log, LOG_BUF_LEN, 
+                        "FORK:parent(pid,tgid)=%d,%d\tchild(pid,tgid)=%d,%d\t[%s]\n",
 		       ev->event_data.fork.parent_pid,
 		       ev->event_data.fork.parent_tgid,
 		       ev->event_data.fork.child_pid,
 		       ev->event_data.fork.child_tgid, cmdline);
+                apiWriteLog(state, log);
 		break;
 	case PROC_EVENT_EXEC:
-		printf("EXEC:pid=%d,tgid=%d\t[%s]\t[%s]\n",
+		snprintf(log, LOG_BUF_LEN,
+                        "EXEC:pid=%d,tgid=%d\t[%s]\t[%s]\n",
 		       ev->event_data.exec.process_pid,
 		       ev->event_data.exec.process_tgid, ids, cmdline);
+                apiWriteLog(state, log);
 
                 execMatches(state, ev->event_data.exec.process_pid, PROC_START);
 
 		break;
 	case PROC_EVENT_EXIT:
-		printf("EXIT:pid=%d,%d\texit code=%d\n",
+		snprintf(log, LOG_BUF_LEN,
+                        "EXIT:pid=%d,%d\texit code=%d\n",
 		       ev->event_data.exit.process_pid,
 		       ev->event_data.exit.process_tgid,
 		       ev->event_data.exit.exit_code);
+                apiWriteLog(state, log);
 
                 //check callbacks
                 execMatches(state, ev->event_data.exit.process_pid, PROC_END);
 
 		break;
 	case PROC_EVENT_UID:
-		printf("UID:pid=%d,%d ruid=%d,euid=%d\n",
+		snprintf(log, LOG_BUF_LEN,
+                        "UID:pid=%d,%d ruid=%d,euid=%d\n",
 			ev->event_data.id.process_pid, ev->event_data.id.process_tgid,
 			ev->event_data.id.r.ruid, ev->event_data.id.e.euid);
+                apiWriteLog(state, log);
 		break;
 	default:
 		break;
