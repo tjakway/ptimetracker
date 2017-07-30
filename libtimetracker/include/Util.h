@@ -64,7 +64,4 @@ bool regexMatch(const char*, std::regex);
         {} \
     };
 
-#undef xstr
-#undef str
-
 #endif
