@@ -33,7 +33,7 @@ boolToCInt False = 0
 
 -- TODO: make the strings optional then pass nullPtr if either are Nothing
 
-addProcMatcher :: FFI.EventCallback -> String -> Bool -> String -> ProgramLoggerM ()
+addProcMatcher :: EventCallback -> String -> Bool -> String -> ProgramLoggerM ()
 addProcMatcher callback procRegex matchOnlyProgName cwdRegex = do
         fPtr <- newEventCallback callback
         (procRegexCStr, matchOnlyProgName', cwdRegexCStr) <- marshall
@@ -61,3 +61,22 @@ listenUntilElapsed :: CULong -> ProgramLoggerM (CInt)
 listenUntilElapsed t = do
         sPtr <- getAPIState
         liftS $ FFI.listenUntilElapsed sPtr t
+
+
+-- **** cnMsg functions ****
+
+data ProcEventData = Other
+                   | NoEvent
+                   | ProcStart PidT 
+                   | ProcEnd ExitCode
+
+getProcEventData :: Ptr () -> IO (Maybe ProcEventData)
+getProcEventData cnHdr
+                | cnHdr == nullPtr = return Nothing
+                | otherwise = do
+                        eventType <- FFI.cnMsgGetProcMatchEventType cnHdr
+                        case eventType of
+                            Other     -> return Other
+                            NoEvent   -> return NoEvent 
+                            ProcStart -> cnMsgGetProcessPid cnHdr >>= (return . ProcStart)
+                            ProcEnd   -> cnMsgGetExitCode cnHdr >>= (return . ProcEnd)
