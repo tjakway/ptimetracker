@@ -6,7 +6,7 @@ import Foreign.Ptr
 
 type CBool = CInt
 
-type EventCallback = CInt -> CInt -> IO ()
+type EventCallback = CInt -> CInt -> CString -> IO ()
 
 -- TODO: write wrapper functions for StopListeningCallback
 -- so we can inspect the Ptr () -- which is a cn_msg* 
@@ -60,10 +60,22 @@ foreign import ccall "wrapper"
     wrapStopListeningCallback :: StopListeningCallback -> IO (StopListeningCallbackFunPtr)
 
 
+-- cnMsg functions
+foreign import ccall "APIState.h cnMsgGetProcMatchEventType"
+    cnMsgGetProcMatchEventType :: Ptr () -> IO CInt
+
+foreign import ccall "APIState.h cnMsgGetProcessPid"
+    cnMsgGetProcessPid :: Ptr () -> IO CUInt
+
+foreign import ccall "APIState.h cnMsgGetExitCode"
+    cnMsgGetExitCode :: Ptr () -> IO CUInt
+
+
 -- TODO: work this into the FFI
 
 --matches the C enum of the same name
-data ProcMatchEventType = NoEvent 
+data ProcMatchEventType = Other
+                        | NoEvent 
                         | ProcStart 
                         | ProcEnd
 
