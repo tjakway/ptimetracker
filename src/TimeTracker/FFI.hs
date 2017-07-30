@@ -80,6 +80,7 @@ data ProcMatchEventType = Other
                         | ProcEnd
 
 procMatchEventTypeToInt :: ProcMatchEventType -> CProcMatchEventType
+procMatchEventTypeToInt Other   = -2
 procMatchEventTypeToInt NoEvent   = -1
 procMatchEventTypeToInt ProcStart =  1
 procMatchEventTypeToInt ProcEnd   =  2
