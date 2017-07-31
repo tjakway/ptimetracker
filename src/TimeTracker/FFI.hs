@@ -6,7 +6,7 @@ import Foreign.Ptr
 
 type CBool = CInt
 
-type EventCallback = CInt -> CInt -> CString -> IO ()
+type CEventCallback = CInt -> CInt -> CString -> IO ()
 
 -- TODO: write wrapper functions for StopListeningCallback
 -- so we can inspect the Ptr () -- which is a cn_msg* 
@@ -18,7 +18,7 @@ type CProcMatchEventType = CInt
 type ExitCode = CInt
 
 --type synonyms, as defined in APIState.h
-type EventCallbackFunPtr = FunPtr (EventCallback)
+type CEventCallbackFunPtr = FunPtr (CEventCallback)
 type ErrorCallbackFunPtr = FunPtr (CString -> IO ())
 type StopListeningCallbackFunPtr = FunPtr (StopListeningCallback)
 
@@ -32,7 +32,7 @@ foreign import ccall "APIState.h freeAPIState"
     freeAPIState :: APIStatePtr -> IO ()
 
 foreign import ccall "APIState.h addProcMatcher"
-    addProcMatcher :: APIStatePtr -> EventCallbackFunPtr -> 
+    addProcMatcher :: APIStatePtr -> CEventCallbackFunPtr -> 
                       CString -> CInt -> CString -> IO () -- the CInt is a C99 bool
 
 foreign import ccall "APIState.h execMatches"
@@ -54,7 +54,7 @@ foreign import ccall "APIState.h listenUntilCallback"
     listenUntilCallback :: APIStatePtr -> StopListeningCallbackFunPtr -> IO (CInt)
 
 foreign import ccall "wrapper"
-    wrapEventCallback :: (CInt -> CInt -> CString -> IO ()) -> IO (EventCallbackFunPtr)
+    wrapCEventCallback :: (CInt -> CInt -> CString -> IO ()) -> IO (CEventCallbackFunPtr)
 
 foreign import ccall "wrapper"
     wrapErrorCallback :: (CString -> IO ()) -> IO (FunPtr (CString -> IO ()))

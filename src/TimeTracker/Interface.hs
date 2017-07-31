@@ -8,13 +8,23 @@ import Foreign.C.String
 import Foreign.Ptr
 import Foreign.Marshal.Alloc (free)
 
-newEventCallback :: FFI.EventCallback -> ProgramLoggerM FFI.EventCallbackFunPtr
+
+-- a haskell-friendly version of CEventCallback, with the C types
+-- marshalled
+type EventCallback = Integer -> Integer -> String -> IO ()
+
+-- Automatically handles marshalling of the passed 
+newEventCallback :: EventCallback -> ProgramLoggerM FFI.CEventCallbackFunPtr
 newEventCallback f = ProgramLoggerM $ \s -> do
-    fptr <- FFI.wrapEventCallback f
+    fptr <- FFI.wrapCEventCallback f'
     let eventCallbacks' = fptr : (eventCallbacks s)
     return (fptr, s { eventCallbacks = eventCallbacks' } )
 
-newStopListeningCallback :: FFI.StopListeningCallback -> ProgramLoggerM FFI.StopListeningCallbackFunPtr
+    where f' :: (CInt -> CInt -> CString -> IO ())
+          f' a b c = peekCString c >>= f (toInteger a) (toInteger b)
+
+newStopListeningCallback :: FFI.StopListeningCallback -> 
+                            ProgramLoggerM FFI.StopListeningCallbackFunPtr
 newStopListeningCallback f = ProgramLoggerM $ \s -> do
     fptr <- FFI.wrapStopListeningCallback f
     let stopListeningCallbacks' = fptr : (stopListeningCallbacks s)
@@ -34,7 +44,7 @@ boolToCInt False = 0
 
 -- TODO: make the strings optional then pass nullPtr if either are Nothing
 
-addProcMatcher :: FFI.EventCallback -> String -> Bool -> String -> ProgramLoggerM ()
+addProcMatcher :: EventCallback -> String -> Bool -> String -> ProgramLoggerM ()
 addProcMatcher callback procRegex matchOnlyProgName cwdRegex = do
         fPtr <- newEventCallback callback
         (procRegexCStr, matchOnlyProgName', cwdRegexCStr) <- marshall

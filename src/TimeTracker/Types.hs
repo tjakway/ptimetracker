@@ -5,7 +5,7 @@ import Foreign.Ptr (freeHaskellFunPtr, nullPtr)
 import Control.Monad
 
 data ProgramLoggerS = ProgramLoggerS {
-                    eventCallbacks :: [EventCallbackFunPtr],
+                    eventCallbacks :: [CEventCallbackFunPtr],
                     errorCallbacks :: [ErrorCallbackFunPtr],
                     stopListeningCallbacks :: [StopListeningCallbackFunPtr],
                     apiState :: APIStatePtr
