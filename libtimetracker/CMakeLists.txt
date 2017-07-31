@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(PTIMETRACKER)
 
-set(MAIN_TARGET ptimetracker)
+set(MAIN_TARGET ptimetracker_c)
 set(MAIN_TARGET_LIB timetracker)
 set(TEST_TARGET test_ptimetracker)
 set(ROOT_TEST_TARGET root_test_ptimetracker)
