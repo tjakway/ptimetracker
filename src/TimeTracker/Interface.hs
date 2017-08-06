@@ -8,7 +8,6 @@ import Foreign.C.String
 import Foreign.Ptr
 import Foreign.Marshal.Alloc (free)
 
-
 -- a haskell-friendly version of CEventCallback, with the C types
 -- marshalled
 type EventCallback = Integer -> Integer -> String -> IO ()
