@@ -21,17 +21,22 @@ type DbMonad a = ReaderT DbData IO a
 
 type StatementFunction = IConnection a => a -> IO Statement
 
-setupBeforeTables :: DbMonad ()
-setupBeforeTables = do
-        c  <- connection <$> get
-        -- enable foreign keys if we're using SQLite
-        let fkPragma = runRaw c "PRAGMA foreign_keys = ON;"
-        cI <- connInfo <$> get
-        when (cI == Sqlite) fkPragma
+setupDbMonad :: DbMonad()
+setupDbMonad = setupBeforeTables >> createTables
+
+    where   setupBeforeTables :: DbMonad ()
+            setupBeforeTables = do
+                    c  <- connection <$> get
+                    -- enable foreign keys if we're using SQLite
+                    let fkPragma = runRaw c "PRAGMA foreign_keys = ON;"
+                    cI <- connInfo <$> get
+                    when (cI == Sqlite) fkPragma
 
 
-createTables :: DbMonad ()
-createTables = (createTablesStmt <$> ask) >>= liftIO . executeRaw
+            createTables :: DbMonad ()
+            createTables = (createTablesStmt <$> ask) >>= liftIO . executeRaw
+
+
 
 createTablesStmt' :: StatementFunction
 createTablesStmt' = flip prepare $ "CREATE TABLE ProcEventTypes( \
@@ -63,9 +68,21 @@ insertTickResolutionStmt' = flip prepare $ "INSERT INTO TickResolutions(id, reso
 -- possibly use StateT on IO to pass the connection?
 mkDbData :: TimeTracker.Config -> IO DbData
 mkDbData conf = do
-        c                    <- connect (connectionInfo conf)
-        createTablesStmt     <- createTablesStmt' c
-        insProcEventTypeStmt <- insertProcEventTypeStmt' c
+        let cI                  =  connectionInfo conf
+        c                       <- connect (connectionInfo conf)
+        createTablesStmt        <- createTablesStmt' c
+        insProcEventTypeStmt    <- insertProcEventTypeStmt' c
         -- XXX: other statements
-        insProcEventStmt     <- insertProcEventStmt' c
+        insProcEventStmt        <- insertProcEventStmt' c
+        insTickResolutionsStmt  <- insertTickResolutionStmt' c
+
+        return $ DbData { connection = c,
+                          connInfo   = cI,
+                          createTablesStmt = createTablesStmt',
+                          insertProcEventTypeStmt = insertProcEventTypeStmt',
+                          insertProcEventStmt = insertProcEventStmt'
+                          insertTickResolutionStmt = insertTickResolutionStmt'
+                          }
     where connect (Sqlite path) = connectSqlite3 path -- TODO: postgres
+
+
