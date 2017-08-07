@@ -1,5 +1,9 @@
 {-# LANGUAGE ExistentialQuantification, Rank2Types, ScopedTypeVariables #-}
-module TimeTracker.IO.Database where
+module TimeTracker.IO.Database 
+(
+runDbMonad
+)
+where
 
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
@@ -23,7 +27,13 @@ type DbMonad a = ReaderT DbData IO a
 -- requires Rank2Types
 type StatementFunction = forall a . IConnection a => a -> IO Statement
 
-setupDbMonad :: DbMonad()
+runDbMonad :: DbMonad a -> DbData -> IO a
+runDbMonad s r = runReaderT s' r
+    where s' = setupDbMonad >> s >>= \x -> (cleanupDbMonad >> return x)
+
+
+
+setupDbMonad :: DbMonad ()
 setupDbMonad = setupBeforeTables >> createTables
 
     where   setupBeforeTables :: DbMonad ()
@@ -86,3 +96,6 @@ mkDbData conf = do
                           insertTickResolutionStmt = insTickResolutionStmt
                           }
     where connect (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
+
+cleanupDbMonad :: DbMonad ()
+cleanupDbMonad = undefined -- XXX
