@@ -19,7 +19,7 @@ data DbData =
 
 type DbMonad a = ReaderT DbData IO a
 
-type StatementFunction = IConnection a => a -> IO Statement
+type StatementFunction = forall a . IConnection a => a -> IO Statement
 
 setupDbMonad :: DbMonad()
 setupDbMonad = setupBeforeTables >> createTables
