@@ -30,7 +30,7 @@ setupDbMonad = setupBeforeTables >> createTables
                     -- enable foreign keys if we're using SQLite
                     let fkPragma = runRaw c "PRAGMA foreign_keys = ON;"
                     cI <- connInfo <$> ask
-                    when (cI == Sqlite) fkPragma
+                    liftIO . when (TimeTracker.isSqlite cI) $ fkPragma
 
 
             createTables :: DbMonad ()

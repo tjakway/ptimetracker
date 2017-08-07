@@ -10,3 +10,6 @@ data Config = Config {
               ticksEnabled :: Bool
             }
 
+isSqlite :: ConnectionInfo -> Bool
+isSqlite (Sqlite _) = True
+isSqlite _ = False
