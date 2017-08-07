@@ -80,7 +80,7 @@ mkDbData conf = do
                           connInfo   = cI,
                           createTablesStmt = createTablesStmt',
                           insertProcEventTypeStmt = insertProcEventTypeStmt',
-                          insertProcEventStmt = insertProcEventStmt'
+                          insertProcEventStmt = insertProcEventStmt',
                           insertTickResolutionStmt = insertTickResolutionStmt'
                           }
     where connect (Sqlite path) = connectSqlite3 path -- TODO: postgres
