@@ -7,7 +7,7 @@ import Control.Monad.Reader
 
 data DbData = 
     forall a . IConnection a => 
-        DBData {
+        DbData {
             connection :: a,
             connInfo :: TimeTracker.ConnectionInfo,
 
