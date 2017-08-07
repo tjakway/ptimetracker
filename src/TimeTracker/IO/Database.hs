@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, ScopedTypeVariables #-}
+{-# LANGUAGE ExistentialQuantification, Rank2Types, ScopedTypeVariables #-}
 module TimeTracker.IO.Database where
 
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
@@ -26,10 +26,10 @@ setupDbMonad = setupBeforeTables >> createTables
 
     where   setupBeforeTables :: DbMonad ()
             setupBeforeTables = do
-                    c  <- connection <$> get
+                    DbData { connection = c }  <- ask
                     -- enable foreign keys if we're using SQLite
                     let fkPragma = runRaw c "PRAGMA foreign_keys = ON;"
-                    cI <- connInfo <$> get
+                    cI <- connInfo <$> ask
                     when (cI == Sqlite) fkPragma
 
 
@@ -83,4 +83,4 @@ mkDbData conf = do
                           insertProcEventStmt = insertProcEventStmt',
                           insertTickResolutionStmt = insertTickResolutionStmt'
                           }
-    where connect (Sqlite path) = connectSqlite3 path -- TODO: postgres
+    where connect (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
