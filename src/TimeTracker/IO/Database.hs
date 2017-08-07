@@ -51,16 +51,16 @@ setupDbMonad = setupBeforeTables >> createTables
 
 
 createTablesStmt' :: StatementFunction
-createTablesStmt' = flip prepare $ "CREATE TABLE ProcEventTypes( \
+createTablesStmt' = flip prepare $ "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
                                     \ name TEXT); \
-                                \ CREATE TABLE ProcEvents( \
+                                \ CREATE TABLE IF NOT EXISTS ProcEvents( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
                                     \ eventType INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
                                     \ when DATETIME, \
                                     \ programName TEXT, \
                                     \ path TEXT); \
-                                \ CREATE TABLE TickResolutions( \
+                                \ CREATE TABLE IF NOT EXISTS TickResolutions( \
                                     \ id INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
                                     \ resolutionMillis INTEGER NOT NULL);"
                                     -- TODO: should TickResolutions use
