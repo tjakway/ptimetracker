@@ -50,7 +50,7 @@ createTablesStmt' = flip prepare $ "CREATE TABLE ProcEventTypes( \
                                     \ path TEXT); \
                                 \ CREATE TABLE TickResolutions( \
                                     \ id INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
-                                    resolutionMillis INTEGER NOT NULL);"
+                                    \ resolutionMillis INTEGER NOT NULL);"
                                     -- TODO: should TickResolutions use
                                     -- a composite primary key of 
                                     -- (id, resolutionMillis)?
