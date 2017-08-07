@@ -48,7 +48,7 @@ Library
   ghc-options:         -Wall -fwarn-tabs -fwarn-incomplete-record-updates -fwarn-unused-do-bind -fwarn-incomplete-uni-patterns
   build-depends:       base >= 4.7, mtl, HDBC, HDBC-sqlite3, HDBC-session
   
-  exposed-modules: TimeTracker.FFI, TimeTracker.Types, TimeTracker.Interface, TimeTracker.IO.Database, TimeTracker.IO.Queries, TimeTracker.Config
+  exposed-modules: TimeTracker.FFI, TimeTracker.Types, TimeTracker.Interface, TimeTracker.IO.Database, TimeTracker.Config.ConfigTypes, TimeTracker.Config.Options
   extra-libraries: stdc++ timetracker
 
 Executable ptimetracker
