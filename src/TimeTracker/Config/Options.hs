@@ -1,13 +1,7 @@
 module TimeTracker.Config where
 
+import TimeTracker.Config.ConfigTypes
 import System.Console.GetOpt
-
-data Config = Config {
-              ticksEnabled :: Bool
-            , dbUrl :: String
-            , dbUsername :: String
-            , dbPassword :: String
-            }
 
 data Flag = EnableTicks
           | DbUrl String

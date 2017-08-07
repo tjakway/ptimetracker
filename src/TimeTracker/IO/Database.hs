@@ -18,3 +18,6 @@ type DbMonad a = ReaderT DbData IO a
 
 createTables :: DbMonad ()
 createTables = (createTablesStmt <$> ask) >>= liftIO . executeRaw
+
+mkDbData :: IO DbData
+mkDbData = undefined
