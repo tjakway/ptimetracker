@@ -84,5 +84,3 @@ mkDbData conf = do
                           insertTickResolutionStmt = insertTickResolutionStmt'
                           }
     where connect (Sqlite path) = connectSqlite3 path -- TODO: postgres
-
-
