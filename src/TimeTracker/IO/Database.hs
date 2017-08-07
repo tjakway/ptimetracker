@@ -3,6 +3,7 @@ module TimeTracker.IO.Database where
 
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
+import Database.HDBC.Sqlite3
 import Control.Monad.Reader
 
 data DbData = 
@@ -69,18 +70,18 @@ insertTickResolutionStmt' = flip prepare $ "INSERT INTO TickResolutions(id, reso
 mkDbData :: TimeTracker.Config -> IO DbData
 mkDbData conf = do
         let cI                  =  TimeTracker.connectionInfo conf
-        c                       <- connect (TimeTracker.connectionInfo conf)
-        createTablesStmt        <- createTablesStmt' c
+        c                       <- (connect (TimeTracker.connectionInfo conf)) :: IO Connection
+        cTablesStmt             <- createTablesStmt' c
         insProcEventTypeStmt    <- insertProcEventTypeStmt' c
         -- XXX: other statements
         insProcEventStmt        <- insertProcEventStmt' c
-        insTickResolutionsStmt  <- insertTickResolutionStmt' c
+        insTickResolutionStmt   <- insertTickResolutionStmt' c
 
         return $ DbData { connection = c,
                           connInfo   = cI,
-                          createTablesStmt = createTablesStmt',
-                          insertProcEventTypeStmt = insertProcEventTypeStmt',
-                          insertProcEventStmt = insertProcEventStmt',
-                          insertTickResolutionStmt = insertTickResolutionStmt'
+                          createTablesStmt = cTablesStmt,
+                          insertProcEventTypeStmt = insProcEventTypeStmt,
+                          insertProcEventStmt = insProcEventStmt,
+                          insertTickResolutionStmt = insTickResolutionStmt
                           }
     where connect (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
