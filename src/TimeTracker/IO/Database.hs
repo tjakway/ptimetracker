@@ -20,6 +20,7 @@ data DbData =
 
 type DbMonad a = ReaderT DbData IO a
 
+-- requires Rank2Types
 type StatementFunction = forall a . IConnection a => a -> IO Statement
 
 setupDbMonad :: DbMonad()
