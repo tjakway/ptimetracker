@@ -9,7 +9,7 @@ data DbData =
     forall a . IConnection a => 
         DBData {
             connection :: a,
-            connInfo :: ConnectionInfo,
+            connInfo :: TimeTracker.ConnectionInfo,
 
             createTablesStmt :: Statement,
             insertProcEventTypeStmt :: Statement,
@@ -68,8 +68,8 @@ insertTickResolutionStmt' = flip prepare $ "INSERT INTO TickResolutions(id, reso
 -- possibly use StateT on IO to pass the connection?
 mkDbData :: TimeTracker.Config -> IO DbData
 mkDbData conf = do
-        let cI                  =  connectionInfo conf
-        c                       <- connect (connectionInfo conf)
+        let cI                  =  TimeTracker.connectionInfo conf
+        c                       <- connect (TimeTracker.connectionInfo conf)
         createTablesStmt        <- createTablesStmt' c
         insProcEventTypeStmt    <- insertProcEventTypeStmt' c
         -- XXX: other statements
