@@ -1,4 +1,4 @@
-module TimeTracker.Config where
+module TimeTracker.Config.Options where
 
 import TimeTracker.Config.ConfigTypes
 import System.Console.GetOpt
