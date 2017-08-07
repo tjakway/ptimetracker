@@ -4,7 +4,7 @@ module TimeTracker.IO.Database where
 import Database.HDBC
 import Control.Monad.Reader
 
-data DBData = 
+data DbData = 
     forall a . IConnection a => 
         DBData {
             connection :: a,
@@ -14,7 +14,7 @@ data DBData =
             insertProcEventTypeStmt :: Statement
         }
 
-type DBMonad a = ReaderT DBData IO a
+type DbMonad a = ReaderT DbData IO a
 
-createTables :: DBMonad ()
+createTables :: DbMonad ()
 createTables = (createTablesStmt <$> ask) >>= liftIO . executeRaw
