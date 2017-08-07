@@ -6,7 +6,7 @@ data ConnectionInfo = Sqlite FilePath
                     | Postgres String
 
 data Config = Config {
-              connectionInfo :: ConnectionInfo
+              connectionInfo :: ConnectionInfo,
               ticksEnabled :: Bool
             }
 

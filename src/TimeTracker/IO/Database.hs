@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ExistentialQuantification, ScopedTypeVariables #-}
 module TimeTracker.IO.Database where
 
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
@@ -12,9 +12,9 @@ data DbData =
             connInfo :: ConnectionInfo,
 
             createTablesStmt :: Statement,
-            insertProcEventTypeStmt :: Statement
+            insertProcEventTypeStmt :: Statement,
             insertProcEventStmt :: Statement,
-            insertTickResolutionStmt :: Statement,
+            insertTickResolutionStmt :: Statement
         }
 
 type DbMonad a = ReaderT DbData IO a
