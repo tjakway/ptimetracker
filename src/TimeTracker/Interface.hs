@@ -80,6 +80,16 @@ data ProcEventData = Other
                    | ProcStart FFI.PidT 
                    | ProcEnd FFI.ExitCode
 
+-- can't make it an enum because it has non-nullary constructors
+
+-- this is just fromEnum
+procEventDataToInt :: ProcEventData -> Int
+procEventDataToInt x = case x of
+                           Other -> 1
+                           NoEvent -> 2
+                           ProcStart -> 3
+                           ProcEnd -> 4
+
 getProcEventData :: Ptr () -> IO (Maybe ProcEventData)
 getProcEventData cnHdr
                 | cnHdr == nullPtr = return Nothing
