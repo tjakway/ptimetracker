@@ -77,6 +77,13 @@ insertTickResolutionStmt' :: StatementFunction
 insertTickResolutionStmt' = flip prepare $ "INSERT INTO TickResolutions(id, resolutionMillis) VALUES (?, ?)"
 
 
+insertProcEventType :: String -> DbMonad Integer
+insertProcEventType s =
+        (insertProcEventTypeStmt <$> ask) >>= (liftIO . (\stmt -> execute stmt s'))
+        where s' :: [SqlValue]
+              s' = return . toSql $ s
+
+
 -- possibly use StateT on IO to pass the connection?
 mkDbData :: TimeTracker.Config -> IO DbData
 mkDbData conf = do
