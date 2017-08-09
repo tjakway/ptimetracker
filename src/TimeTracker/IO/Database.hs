@@ -118,4 +118,5 @@ mkDbData conf = do
 cleanupDbMonad :: DbMonad ()
 cleanupDbMonad = do
         DbData { connection = c } <- ask
+        liftIO . commit $ c
         liftIO . disconnect $ c
