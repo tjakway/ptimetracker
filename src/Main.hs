@@ -5,7 +5,6 @@ import TimeTracker.Interface
 import TimeTracker.Types
 
 
--- TODO: shouldn't have to handle marshalling in the callback
 main :: IO ()
 main = let eventCallback pid _ name = putStrLn ("PID called from Haskell: " ++ (show pid) ++ ", name: " ++ name)
            procRegex = ".*"
