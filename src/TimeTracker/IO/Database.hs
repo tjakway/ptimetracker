@@ -17,6 +17,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Time.Clock
 import Control.Monad.Reader
+import Control.Monad.State.Strict
 
 data DbData = 
     forall a . IConnection a => 
@@ -33,9 +34,6 @@ data DbData =
         }
 
 type DbMonad a = ReaderT DbData IO a
-
--- requires Rank2Types
-type StatementFunction = forall a . IConnection a => a -> IO Statement
 
 runDbMonad :: DbMonad a -> DbData -> IO a
 runDbMonad s r = runReaderT s' r
@@ -58,10 +56,15 @@ setupDbMonad = setupBeforeTables >> createTables
             createTables :: DbMonad ()
             createTables = (createTablesStmt <$> ask) >>= liftIO . executeRaw
 
+-- requires Rank2Types
+type StatementFunction = forall s . IConnection s => StateT s IO Statement
+
+sprepare :: IConnection s => String -> StateT s IO Statement
+sprepare sql = get >>= \s -> liftIO . prepare s $ sql
 
 
 createTablesStmt' :: StatementFunction
-createTablesStmt' = flip prepare $ "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
+createTablesStmt' =  sprepare "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
                                     \ name TEXT); \
                                 \ CREATE TABLE IF NOT EXISTS ProcEvents( \
@@ -78,16 +81,19 @@ createTablesStmt' = flip prepare $ "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     -- (id, resolutionMillis)?
 
 insertProcEventTypeStmt' :: StatementFunction
-insertProcEventTypeStmt' = flip prepare $ "INSERT INTO ProcEventTypes(name) VALUES (?)"
+insertProcEventTypeStmt' = sprepare "INSERT INTO ProcEventTypes(name) VALUES (?)"
 
 insertProcEventStmt' :: StatementFunction
-insertProcEventStmt' = flip prepare $ "INSERT INTO ProcEvents(eventType, when, programName, path) VALUES (?, ?, ?, ?)"
+insertProcEventStmt' = sprepare "INSERT INTO ProcEvents(eventType, when, programName, path) VALUES (?, ?, ?, ?)"
 
 insertTickResolutionStmt' :: StatementFunction
-insertTickResolutionStmt' = flip prepare $ "INSERT INTO TickResolutions(id, resolutionMillis) VALUES (?, ?)"
+insertTickResolutionStmt' = sprepare "INSERT INTO TickResolutions(id, resolutionMillis) VALUES (?, ?)"
 
 selectProcEventTypeStmt' :: StatementFunction
-selectProcEventTypeStmt' = flip prepare $ "SELECT * FROM ProcEventTypes WHERE name=?"
+selectProcEventTypeStmt' = sprepare "SELECT * FROM ProcEventTypes WHERE name=?"
+
+
+
 
 
 -- TODO: instead of returning Integers, have a better way to check errors
@@ -114,23 +120,32 @@ mkDbData :: TimeTracker.Config -> IO DbData
 mkDbData conf = do
         let cI                  =  TimeTracker.connectionInfo conf
         c                       <- (connect (TimeTracker.connectionInfo conf)) :: IO Connection
-        cTablesStmt             <- createTablesStmt' c
-        insProcEventTypeStmt    <- insertProcEventTypeStmt' c
-        -- XXX: other statements
-        insProcEventStmt        <- insertProcEventStmt' c
-        insTickResolutionStmt   <- insertTickResolutionStmt' c
 
-        selProcEventTypeStmt    <- selectProcEventTypeStmt' c
+        evalStateT (mkDbData' cI) c
 
-        return $ DbData { connection = c,
-                          connInfo   = cI,
-                          createTablesStmt = cTablesStmt,
-                          insertProcEventTypeStmt = insProcEventTypeStmt,
-                          insertProcEventStmt = insProcEventStmt,
-                          insertTickResolutionStmt = insTickResolutionStmt,
-                          selectProcEventTypeStmt  = selProcEventTypeStmt
-                          }
     where connect (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
+
+          mkDbData' :: IConnection s => TimeTracker.ConnectionInfo -> StateT s IO DbData
+          mkDbData' cI = do
+            cTablesStmt             <- createTablesStmt'
+            insProcEventTypeStmt    <- insertProcEventTypeStmt'
+            -- XXX: other statements
+            insProcEventStmt        <- insertProcEventStmt'
+            insTickResolutionStmt   <- insertTickResolutionStmt'
+
+            selProcEventTypeStmt    <- selectProcEventTypeStmt'
+
+            c                       <- get
+
+            return $ DbData { connection = c,
+                            connInfo   = cI,
+                            createTablesStmt = cTablesStmt,
+                            insertProcEventTypeStmt = insProcEventTypeStmt,
+                            insertProcEventStmt = insProcEventStmt,
+                            insertTickResolutionStmt = insTickResolutionStmt,
+                            selectProcEventTypeStmt  = selProcEventTypeStmt
+                            }
+
 
 -- TODO
 cleanupDbMonad :: DbMonad ()
