@@ -1,13 +1,16 @@
-{-# LANGUAGE ExistentialQuantification, Rank2Types, ScopedTypeVariables #-}
+{-# LANGUAGE ExistentialQuantification, Rank2Types, ScopedTypeVariables,
+FlexibleContexts #-}
 module TimeTracker.IO.Database 
 (
 runDbMonad
 )
 where
 
+import TimeTracker.Interface (ProcEventData, procEventDataToInt)
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
+import Data.Time.Clock
 import Control.Monad.Reader
 
 data DbData = 
@@ -77,11 +80,18 @@ insertTickResolutionStmt' :: StatementFunction
 insertTickResolutionStmt' = flip prepare $ "INSERT INTO TickResolutions(id, resolutionMillis) VALUES (?, ?)"
 
 
+-- TODO: instead of returning Integers, have a better way to check errors
+
 insertProcEventType :: String -> DbMonad Integer
 insertProcEventType s =
         (insertProcEventTypeStmt <$> ask) >>= (liftIO . (\stmt -> execute stmt s'))
         where s' :: [SqlValue]
               s' = return . toSql $ s
+
+insertProcEvents :: [(ProcEventData, UTCTime, String, String)] -> DbMonad ()
+insertProcEvents xs = (insertProcEventStmt <$> ask) >>= \stmt -> (liftIO $ executeMany stmt xs')
+    where conv (a, b, c, d) = [toSql . procEventDataToInt $ a, toSql b, toSql c, toSql d]
+          xs' = map conv xs
 
 
 -- possibly use StateT on IO to pass the connection?
