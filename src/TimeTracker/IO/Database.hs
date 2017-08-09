@@ -93,6 +93,11 @@ insertProcEvents xs = (insertProcEventStmt <$> ask) >>= \stmt -> (liftIO $ execu
     where conv (a, b, c, d) = [toSql . procEventDataToInt $ a, toSql b, toSql c, toSql d]
           xs' = map conv xs
 
+-- | the ID is a foreign key into ProcEventType
+insertTickResolution :: Integer -> Integer -> DbMonad Integer
+insertTickResolution procEventTypeId resolutionMillis = 
+        (insertTickResolutionStmt <$> ask) >>= (liftIO . (\stmt -> execute stmt values))
+    where values = [toSql procEventTypeId, toSql resolutionMillis]
 
 -- possibly use StateT on IO to pass the connection?
 mkDbData :: TimeTracker.Config -> IO DbData
