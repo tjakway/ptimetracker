@@ -17,7 +17,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Time.Clock
 import Data.Maybe (isJust)
-import Data.Map hiding (map)
+import qualified Data.Set as Set
 import Safe
 import Control.Monad.Reader
 import Control.Monad.State.Strict
@@ -44,8 +44,13 @@ runDbMonad s r = runReaderT s' r
     where s' = setupDbMonad >> s >>= \x -> (cleanupDbMonad >> return x)
 
 
+-- XXX: must be kept up to date with TimeTracker.Interface.ProcEventData--
+-- is there a better way to do this?
+startingProcEventNames :: Set.Set String
+startingProcEventNames = Set.fromList ["Other", "NoEvent", "ProcStart", "ProcEnd"]
+
 setupDbMonad :: DbMonad ()
-setupDbMonad = setupBeforeTables >> createTables
+setupDbMonad = setupBeforeTables >> createTables >> setupProcEventTypes
 
     where   setupBeforeTables :: DbMonad ()
             setupBeforeTables = do
@@ -60,10 +65,18 @@ setupDbMonad = setupBeforeTables >> createTables
             createTables = (createTablesStmt <$> ask) >>= liftIO . executeRaw
 
             setupProcEventTypes :: DbMonad ()
-            setupProcEventTypes = undefined
-        
-data ProcEventType = ProcEventType String Int
+            setupProcEventTypes = do
+                eventTypes <- Set.fromList . fmap procEventTypeName <$> selectAllProcEventTypes
+                let missingProcEventTypes = startingProcEventNames `Set.difference` eventTypes
 
+                mapM_ insertProcEventType missingProcEventTypes
+
+        
+data ProcEventType = ProcEventType {
+                    procEventTypeName :: String,
+                    procEventTypeId   :: Int
+                   }
+                   deriving (Eq)
 
 -- requires Rank2Types
 type StatementFunction = forall s . IConnection s => StateT s IO Statement
