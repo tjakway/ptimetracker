@@ -27,7 +27,9 @@ data DbData =
             createTablesStmt :: Statement,
             insertProcEventTypeStmt :: Statement,
             insertProcEventStmt :: Statement,
-            insertTickResolutionStmt :: Statement
+            insertTickResolutionStmt :: Statement,
+
+            selectProcEventTypeStmt :: Statement
         }
 
 type DbMonad a = ReaderT DbData IO a
@@ -84,6 +86,9 @@ insertProcEventStmt' = flip prepare $ "INSERT INTO ProcEvents(eventType, when, p
 insertTickResolutionStmt' :: StatementFunction
 insertTickResolutionStmt' = flip prepare $ "INSERT INTO TickResolutions(id, resolutionMillis) VALUES (?, ?)"
 
+selectProcEventTypeStmt' :: StatementFunction
+selectProcEventTypeStmt' = flip prepare $ "SELECT * FROM ProcEventTypes WHERE name=?"
+
 
 -- TODO: instead of returning Integers, have a better way to check errors
 
@@ -115,12 +120,15 @@ mkDbData conf = do
         insProcEventStmt        <- insertProcEventStmt' c
         insTickResolutionStmt   <- insertTickResolutionStmt' c
 
+        selProcEventTypeStmt    <- selectProcEventTypeStmt' c
+
         return $ DbData { connection = c,
                           connInfo   = cI,
                           createTablesStmt = cTablesStmt,
                           insertProcEventTypeStmt = insProcEventTypeStmt,
                           insertProcEventStmt = insProcEventStmt,
-                          insertTickResolutionStmt = insTickResolutionStmt
+                          insertTickResolutionStmt = insTickResolutionStmt,
+                          selectProcEventTypeStmt  = selProcEventTypeStmt
                           }
     where connect (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
 
