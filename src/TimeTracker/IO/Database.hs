@@ -114,5 +114,8 @@ mkDbData conf = do
                           }
     where connect (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
 
+-- TODO
 cleanupDbMonad :: DbMonad ()
-cleanupDbMonad = undefined -- XXX
+cleanupDbMonad = do
+        DbData { connection = c } <- ask
+        liftIO . disconnect $ c
