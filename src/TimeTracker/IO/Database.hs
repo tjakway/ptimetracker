@@ -2,7 +2,12 @@
 FlexibleContexts #-}
 module TimeTracker.IO.Database 
 (
-runDbMonad
+DbData(..),
+mkDbData,
+runDbMonad,
+insertProcEventType,
+insertProcEvents,
+insertTickResolution
 )
 where
 
