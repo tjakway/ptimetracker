@@ -17,7 +17,8 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Time.Clock
 import Data.Maybe (isJust)
-import Safe (headMay)
+import Data.Map hiding (map)
+import Safe
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 
@@ -32,7 +33,8 @@ data DbData =
             insertProcEventStmt :: Statement,
             insertTickResolutionStmt :: Statement,
 
-            selectProcEventTypeStmt :: Statement
+            selectProcEventTypeStmt :: Statement,
+            selectAllProcEventTypesStmt :: Statement
         }
 
 type DbMonad a = ReaderT DbData IO a
@@ -40,7 +42,6 @@ type DbMonad a = ReaderT DbData IO a
 runDbMonad :: DbMonad a -> DbData -> IO a
 runDbMonad s r = runReaderT s' r
     where s' = setupDbMonad >> s >>= \x -> (cleanupDbMonad >> return x)
-
 
 
 setupDbMonad :: DbMonad ()
@@ -57,6 +58,12 @@ setupDbMonad = setupBeforeTables >> createTables
 
             createTables :: DbMonad ()
             createTables = (createTablesStmt <$> ask) >>= liftIO . executeRaw
+
+            setupProcEventTypes :: DbMonad ()
+            setupProcEventTypes = undefined
+        
+data ProcEventType = ProcEventType String Int
+
 
 -- requires Rank2Types
 type StatementFunction = forall s . IConnection s => StateT s IO Statement
@@ -94,7 +101,8 @@ insertTickResolutionStmt' = sprepare "INSERT INTO TickResolutions(id, resolution
 selectProcEventTypeStmt' :: StatementFunction
 selectProcEventTypeStmt' = sprepare "SELECT * FROM ProcEventTypes WHERE name=?"
 
-
+selectAllProcEventTypesStmt' :: StatementFunction
+selectAllProcEventTypesStmt' = sprepare "SELECT * FROM ProcEventTypes"
 
 -- TODO: instead of returning Integers, have a better way to check errors
 
@@ -121,6 +129,16 @@ selectProcEventType :: String -> DbMonad (Maybe Integer)
 selectProcEventType name = (selectProcEventTypeStmt <$> ask) >>= 
                             liftIO . \s -> (fetchRow s >>= return . fmap fromSql . (headMay =<<))
 
+selectAllProcEventTypes :: DbMonad [ProcEventType]
+selectAllProcEventTypes = ((selectAllProcEventTypesStmt <$> ask) >>= liftIO . fetchAllRows') >>= return . map f
+    where f xs = let at' c = fromSql . atNote "error retrieving record in selectAllProcEventTypes" c
+                     id   = xs `at'` 0
+                     name = xs `at'` 1
+                     in ProcEventType id name
+
+-- | get whether that ProcEventType exists (search by name)
+procEventTypeExists :: String -> DbMonad Bool
+procEventTypeExists = fmap isJust . selectProcEventType
 
 -- possibly use StateT on IO to pass the connection?
 mkDbData :: TimeTracker.Config -> IO DbData
@@ -141,7 +159,7 @@ mkDbData conf = do
             insTickResolutionStmt   <- insertTickResolutionStmt'
 
             selProcEventTypeStmt    <- selectProcEventTypeStmt'
-
+            selAllProcEventTypesStmt<- selectAllProcEventTypesStmt'
             c                       <- get
 
             return $ DbData { connection = c,
@@ -150,7 +168,8 @@ mkDbData conf = do
                             insertProcEventTypeStmt = insProcEventTypeStmt,
                             insertProcEventStmt = insProcEventStmt,
                             insertTickResolutionStmt = insTickResolutionStmt,
-                            selectProcEventTypeStmt  = selProcEventTypeStmt
+                            selectProcEventTypeStmt  = selProcEventTypeStmt,
+                            selectAllProcEventTypesStmt  = selAllProcEventTypesStmt
                             }
 
 
