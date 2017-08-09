@@ -120,7 +120,6 @@ insertTickResolution procEventTypeId resolutionMillis =
 selectProcEventType :: String -> DbMonad (Maybe Integer)
 selectProcEventType name = (selectProcEventTypeStmt <$> ask) >>= 
                             liftIO . \s -> (fetchRow s >>= return . fmap fromSql . (headMay =<<))
-                            -- \s -> (liftIO $ headMay <$> fetchRow s <*> fromSql)
 
 
 -- possibly use StateT on IO to pass the connection?
