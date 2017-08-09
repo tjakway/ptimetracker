@@ -16,6 +16,8 @@ import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Time.Clock
+import Data.Maybe (isJust)
+import Safe (headMay)
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 
@@ -94,8 +96,6 @@ selectProcEventTypeStmt' = sprepare "SELECT * FROM ProcEventTypes WHERE name=?"
 
 
 
-
-
 -- TODO: instead of returning Integers, have a better way to check errors
 
 insertProcEventType :: String -> DbMonad Integer
@@ -114,6 +114,14 @@ insertTickResolution :: Integer -> Integer -> DbMonad Integer
 insertTickResolution procEventTypeId resolutionMillis = 
         (insertTickResolutionStmt <$> ask) >>= (liftIO . (\stmt -> execute stmt values))
     where values = [toSql procEventTypeId, toSql resolutionMillis]
+
+-- | search for a ProcEventType by name and return the corresponding ID if
+-- it exists
+selectProcEventType :: String -> DbMonad (Maybe Integer)
+selectProcEventType name = (selectProcEventTypeStmt <$> ask) >>= 
+                            liftIO . \s -> (fetchRow s >>= return . fmap fromSql . (headMay =<<))
+                            -- \s -> (liftIO $ headMay <$> fetchRow s <*> fromSql)
+
 
 -- possibly use StateT on IO to pass the connection?
 mkDbData :: TimeTracker.Config -> IO DbData
