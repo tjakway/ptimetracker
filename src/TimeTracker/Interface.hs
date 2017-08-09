@@ -87,8 +87,8 @@ procEventDataToInt :: ProcEventData -> Int
 procEventDataToInt x = case x of
                            Other -> 1
                            NoEvent -> 2
-                           ProcStart -> 3
-                           ProcEnd -> 4
+                           ProcStart _ -> 3
+                           ProcEnd _ -> 4
 
 getProcEventData :: Ptr () -> IO (Maybe ProcEventData)
 getProcEventData cnHdr
