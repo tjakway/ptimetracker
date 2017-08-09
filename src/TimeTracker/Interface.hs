@@ -12,7 +12,7 @@ import Foreign.Marshal.Alloc (free)
 -- marshalled
 type EventCallback = Integer -> Integer -> String -> IO ()
 
--- Automatically handles marshalling of the passed 
+-- Automatically handles marshalling of the passed name
 newEventCallback :: EventCallback -> ProgramLoggerM FFI.CEventCallbackFunPtr
 newEventCallback f = ProgramLoggerM $ \s -> do
     fptr <- FFI.wrapCEventCallback f'
