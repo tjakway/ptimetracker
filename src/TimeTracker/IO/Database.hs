@@ -11,7 +11,7 @@ insertTickResolution
 )
 where
 
-import TimeTracker.Interface (ProcEventData, procEventDataToInt)
+import TimeTracker.Interface (ProcEventData, procEventDataToInt, EventCallback)
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
@@ -192,3 +192,8 @@ cleanupDbMonad = do
         DbData { connection = c } <- ask
         liftIO . commit $ c
         liftIO . disconnect $ c
+
+
+-- run the DbMonad action with the current state
+asIOAction :: DbMonad a -> DbMonad (IO a)
+asIOAction action = runDbMonad action <$> ask
