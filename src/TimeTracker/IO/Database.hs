@@ -1,14 +1,14 @@
 {-# LANGUAGE ExistentialQuantification, Rank2Types, ScopedTypeVariables,
 FlexibleContexts #-}
 module TimeTracker.IO.Database 
-(
+{-(
 DbData(..),
 mkDbData,
 runDbMonad,
 insertProcEventType,
 insertProcEvents,
 insertTickResolution
-)
+)-}
 where
 
 import TimeTracker.Interface (ProcEventData, procEventDataToInt, EventCallback)
@@ -85,6 +85,7 @@ sprepare :: IConnection s => String -> StateT s IO Statement
 sprepare sql = get >>= \s -> liftIO . prepare s $ sql
 
 
+-- \ path TEXT); \ --TODO: add path column to ProcEvents?
 createTablesStmt' :: StatementFunction
 createTablesStmt' =  sprepare "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
@@ -94,7 +95,6 @@ createTablesStmt' =  sprepare "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ eventType INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
                                     \ when DATETIME, \
                                     \ programName TEXT); \
-                                    -- \ path TEXT); \ --TODO: add path column?
                                 \ CREATE TABLE IF NOT EXISTS TickResolutions( \
                                     \ id INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
                                     \ resolutionMillis INTEGER NOT NULL);"
