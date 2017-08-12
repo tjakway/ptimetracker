@@ -1,17 +1,17 @@
 {-# LANGUAGE ExistentialQuantification, Rank2Types, ScopedTypeVariables,
 FlexibleContexts #-}
 module TimeTracker.IO.Database 
-(
+{-(
 DbData(..),
 mkDbData,
 runDbMonad,
 insertProcEventType,
 insertProcEvents,
 insertTickResolution
-)
+)-}
 where
 
-import TimeTracker.Interface (ProcEventData, procEventDataToInt)
+import TimeTracker.Interface (ProcEventData, procEventDataToInt, EventCallback)
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
@@ -85,6 +85,7 @@ sprepare :: IConnection s => String -> StateT s IO Statement
 sprepare sql = get >>= \s -> liftIO . prepare s $ sql
 
 
+-- \ path TEXT); \ --TODO: add path column to ProcEvents?
 createTablesStmt' :: StatementFunction
 createTablesStmt' =  sprepare "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
@@ -93,8 +94,7 @@ createTablesStmt' =  sprepare "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
                                     \ eventType INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
                                     \ when DATETIME, \
-                                    \ programName TEXT, \
-                                    \ path TEXT); \
+                                    \ programName TEXT); \
                                 \ CREATE TABLE IF NOT EXISTS TickResolutions( \
                                     \ id INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
                                     \ resolutionMillis INTEGER NOT NULL);"
@@ -106,7 +106,7 @@ insertProcEventTypeStmt' :: StatementFunction
 insertProcEventTypeStmt' = sprepare "INSERT INTO ProcEventTypes(name) VALUES (?)"
 
 insertProcEventStmt' :: StatementFunction
-insertProcEventStmt' = sprepare "INSERT INTO ProcEvents(eventType, when, programName, path) VALUES (?, ?, ?, ?)"
+insertProcEventStmt' = sprepare "INSERT INTO ProcEvents(eventType, when, programName) VALUES (?, ?, ?)"
 
 insertTickResolutionStmt' :: StatementFunction
 insertTickResolutionStmt' = sprepare "INSERT INTO TickResolutions(id, resolutionMillis) VALUES (?, ?)"
@@ -125,9 +125,9 @@ insertProcEventType s =
         where s' :: [SqlValue]
               s' = return . toSql $ s
 
-insertProcEvents :: [(ProcEventData, UTCTime, String, String)] -> DbMonad ()
+insertProcEvents :: [(ProcEventData, UTCTime, String)] -> DbMonad ()
 insertProcEvents xs = (insertProcEventStmt <$> ask) >>= \stmt -> (liftIO $ executeMany stmt xs')
-    where conv (a, b, c, d) = [toSql . procEventDataToInt $ a, toSql b, toSql c, toSql d]
+    where conv (a, b, c) = [toSql . procEventDataToInt $ a, toSql b, toSql c]
           xs' = map conv xs
 
 -- | the ID is a foreign key into ProcEventType
@@ -192,3 +192,8 @@ cleanupDbMonad = do
         DbData { connection = c } <- ask
         liftIO . commit $ c
         liftIO . disconnect $ c
+
+
+-- run the DbMonad action with the current state
+asIOAction :: DbMonad a -> DbMonad (IO a)
+asIOAction action = runDbMonad action <$> ask
