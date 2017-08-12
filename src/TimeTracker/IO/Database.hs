@@ -11,7 +11,7 @@ insertTickResolution
 )-}
 where
 
-import TimeTracker.Interface (ProcEventData, procEventDataToInt, EventCallback)
+import TimeTracker.Interface (ProcEventData, procEventDataToInt)
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
@@ -140,7 +140,10 @@ insertTickResolution procEventTypeId resolutionMillis =
 -- it exists
 selectProcEventType :: String -> DbMonad (Maybe Integer)
 selectProcEventType name = (selectProcEventTypeStmt <$> ask) >>= 
-                            liftIO . \s -> (fetchRow s >>= return . fmap fromSql . (headMay =<<))
+                            liftIO . \s -> (execute s name' >> 
+                                           fetchRow s >>= 
+                                           return . fmap fromSql . (headMay =<<))
+                where name' = [toSql name]
 
 selectAllProcEventTypes :: DbMonad [ProcEventType]
 selectAllProcEventTypes = ((selectAllProcEventTypesStmt <$> ask) >>= liftIO . fetchAllRows') >>= return . map f
