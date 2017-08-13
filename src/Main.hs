@@ -1,10 +1,16 @@
 module Main where
 
 import Data.IORef
+import Control.Monad.IO.Class (liftIO)
+import Data.Time.Clock (getCurrentTime)
 import TimeTracker.Interface
 import TimeTracker.Types
 import TimeTracker.IO.Database
+import qualified TimeTracker.FFI as FFI
 
+--stand-in for a real logging function
+logF :: String -> IO ()
+logF = putStrLn
 
 main :: IO ()
 main = let eventCallback pid _ name = putStrLn ("PID called from Haskell: " ++ (show pid) ++ ", name: " ++ name)
@@ -28,21 +34,24 @@ continueCallback = do
 
 logCallback :: Integer -> Integer -> String -> DbMonad ()
 logCallback pid procEventTypeInt progName = 
-        let procEventData = case intToProcMatchEventType procEventTypeInt
-                                of Other     -> Other
-                                   NoEvent   -> NoEvent
-                                   ProcStart -> ProcStart pid
-                                   ProcEnd   -> ProcEnd -1 -- TODO: need to get the actual exit code
+        let procEventData = FFI.intToProcMatchEventType (fromInteger procEventTypeInt) >>= 
+                   \x -> case x of FFI.Other     -> Just Other
+                                   FFI.NoEvent   -> Just NoEvent
+                                   FFI.ProcStart -> Just . ProcStart . fromInteger $ pid
+                                   FFI.ProcEnd   -> Just . ProcEnd . fromInteger $ -1 -- TODO: need to get the actual exit code
         in do
             now <- liftIO getCurrentTime
-            insertProcEvents [(procEventData, now, progName)]
+            -- TODO: fix line length
+            case procEventData of Nothing -> liftIO $ logF ("Received unknown event type from progName" ++ progName)
+                                  Just ev -> insertProcEvents [(ev, now, progName)]
 
 
 dbMonadAction = 
         let procRegex = ".*"
             cwdRegex = ".*"
             procM x = addProcMatcher x procRegex False cwdRegex
-        in asIOAction logCallback >>= 
+            logCallback' = \a b c -> asIOAction . logCallback a b $ c
+        in callbackAsIO logCallback >>= 
             (liftIO . procM) >> 
             liftIO . runProgramLogger (procM >> listenUntilCallback continueCallback) >>= \res ->
             liftIO . putStrLn $ "res = " ++ (show res)
