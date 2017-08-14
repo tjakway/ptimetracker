@@ -1,9 +1,13 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
+import System.IO
+import System.Exit
+import Control.Monad (when)
 import Data.IORef
 import Control.Monad.IO.Class (liftIO)
 import Data.Time.Clock (getCurrentTime)
+import System.Posix.User
 import TimeTracker.Interface
 import TimeTracker.Types
 import TimeTracker.IO.Database
@@ -13,6 +17,14 @@ import qualified TimeTracker.FFI as FFI
 logF :: String -> IO ()
 logF = putStrLn
 
+exitIfNotRoot :: IO ()
+exitIfNotRoot = do
+        isRoot <- fmap (== 0) getRealUserID
+        when (not isRoot) $ do
+            hPutStrLn stderr "Must be run as root."
+            exitFailure
+
+
 main :: IO ()
 main = let eventCallback pid _ name = putStrLn ("PID called from Haskell: " ++ (show pid) ++ ", name: " ++ name)
            procRegex = ".*"
@@ -20,7 +32,7 @@ main = let eventCallback pid _ name = putStrLn ("PID called from Haskell: " ++ (
            procM = addProcMatcher eventCallback procRegex False cwdRegex
         in do
             putStrLn "Haskell main started"
-
+            exitFailure
 
 
 continueCallback :: IO FFI.StopListeningCallback
