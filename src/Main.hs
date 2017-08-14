@@ -7,7 +7,6 @@ import qualified System.Log.Logger as Logger
 import Control.Monad (when)
 import Data.IORef
 import Control.Monad.IO.Class (liftIO)
-import Data.Time.Clock (getCurrentTime)
 import System.Posix.User
 import TimeTracker.Interface
 import TimeTracker.Types
@@ -56,10 +55,9 @@ logCallback pid procEventTypeInt progName =
                                    FFI.ProcStart -> Just . ProcStart . fromInteger $ pid
                                    FFI.ProcEnd   -> Just . ProcEnd . fromInteger $ -1 -- TODO: need to get the actual exit code
         in do
-            now <- liftIO getCurrentTime
             -- TODO: fix line length
             case procEventData of Nothing -> liftIO $ logError ("Received unknown event type from progName" ++ progName)
-                                  Just ev -> insertProcEvents [(ev, now, progName)]
+                                  Just ev -> insertProcEvents [(ev, progName)]
 
 
 dbMonadAction :: DbMonad ()

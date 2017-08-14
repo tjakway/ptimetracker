@@ -16,7 +16,6 @@ import TimeTracker.Interface (ProcEventData, procEventDataToInt, EventCallback)
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
-import Data.Time.Clock
 import Data.Maybe (isJust)
 import qualified Data.Set as Set
 import Safe
