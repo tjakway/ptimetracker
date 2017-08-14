@@ -1,14 +1,14 @@
 {-# LANGUAGE ExistentialQuantification, Rank2Types, ScopedTypeVariables,
 FlexibleContexts #-}
 module TimeTracker.IO.Database 
-{-(
+(
 DbData(..),
 mkDbData,
 runDbMonad,
 insertProcEventType,
 insertProcEvents,
 insertTickResolution
-)-}
+)
 where
 
 import TimeTracker.Interface (ProcEventData, procEventDataToInt, EventCallback)
@@ -39,10 +39,16 @@ data DbData =
 
 type DbMonad a = ReaderT DbData IO a
 
-runDbMonad :: DbMonad a -> DbData -> IO a
-runDbMonad s r = runReaderT s' r
+-- | Setup all resources needed for the monadic computation then execute it
+-- note: this is expensive, don't call often
+runDbMonad :: TimeTracker.Config -> DbMonad a -> IO a
+runDbMonad config s = mkDbData config >>= runReaderT s'
     where s' = setupDbMonad >> s >>= \x -> (cleanupDbMonad >> return x)
 
+-- | for use within this module (not exported)
+-- convenient for subcomputations in the DbMonad
+runDbMonadWithState :: DbMonad a -> DbData -> IO a
+runDbMonadWithState s r = runReaderT s' r
 
 -- XXX: must be kept up to date with TimeTracker.Interface.ProcEventData--
 -- is there a better way to do this?
@@ -199,4 +205,4 @@ cleanupDbMonad = do
 callbackAsIO :: (Integer -> Integer -> String -> DbMonad ()) -> DbMonad EventCallback
 callbackAsIO callback = do
         dbData <- ask 
-        return $ \a b c -> runDbMonad (callback a b c) dbData
+        return $ \a b c -> runDbMonadWithState (callback a b c) dbData
