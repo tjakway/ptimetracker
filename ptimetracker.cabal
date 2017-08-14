@@ -56,6 +56,6 @@ Executable ptimetracker
   default-language:    Haskell2010
   main-is:             Main.hs
   ghc-options:         -Wall -Wcompat -fwarn-tabs -fwarn-incomplete-record-updates -fwarn-unused-do-bind -fwarn-incomplete-uni-patterns -Werror=missing-fields
-  build-depends:       base >= 4.7, ptimetracker, mtl, HDBC, HDBC-sqlite3, HDBC-session, time, safe, containers, unix
+  build-depends:       base >= 4.7, ptimetracker, mtl, HDBC, HDBC-sqlite3, HDBC-session, time, safe, containers, unix, hslogger
 
   extra-libraries: stdc++ timetracker

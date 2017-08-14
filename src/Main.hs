@@ -3,6 +3,7 @@ module Main where
 
 import System.IO
 import System.Exit
+import qualified System.Log.Logger as Logger
 import Control.Monad (when)
 import Data.IORef
 import Control.Monad.IO.Class (liftIO)
@@ -11,11 +12,14 @@ import System.Posix.User
 import TimeTracker.Interface
 import TimeTracker.Types
 import TimeTracker.IO.Database
+import TimeTracker.Config.ConfigTypes
 import qualified TimeTracker.FFI as FFI
 
---stand-in for a real logging function
-logF :: String -> IO ()
-logF = putStrLn
+logDebug :: String -> IO ()
+logDebug = Logger.debugM "Main"
+
+logError :: String -> IO ()
+logError = Logger.errorM "Main"
 
 exitIfNotRoot :: IO ()
 exitIfNotRoot = do
@@ -26,13 +30,11 @@ exitIfNotRoot = do
 
 
 main :: IO ()
-main = let eventCallback pid _ name = putStrLn ("PID called from Haskell: " ++ (show pid) ++ ", name: " ++ name)
-           procRegex = ".*"
-           cwdRegex = ".*"
-           procM = addProcMatcher eventCallback procRegex False cwdRegex
-        in do
-            putStrLn "Haskell main started"
-            exitFailure
+main = do
+        exitIfNotRoot
+        putStrLn "Haskell main started."
+        let conf = Config {connectionInfo = Sqlite "test.db", ticksEnabled = True }
+        runDbMonad conf dbMonadAction
 
 
 continueCallback :: IO FFI.StopListeningCallback
@@ -56,7 +58,7 @@ logCallback pid procEventTypeInt progName =
         in do
             now <- liftIO getCurrentTime
             -- TODO: fix line length
-            case procEventData of Nothing -> liftIO $ logF ("Received unknown event type from progName" ++ progName)
+            case procEventData of Nothing -> liftIO $ logError ("Received unknown event type from progName" ++ progName)
                                   Just ev -> insertProcEvents [(ev, now, progName)]
 
 

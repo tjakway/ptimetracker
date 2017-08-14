@@ -29,7 +29,6 @@ data DbData =
             connection :: a,
             connInfo :: TimeTracker.ConnectionInfo,
 
-            createTablesStmt :: Statement,
             insertProcEventTypeStmt :: Statement,
             insertProcEventStmt :: Statement,
             insertTickResolutionStmt :: Statement,
@@ -43,7 +42,10 @@ type DbMonad a = ReaderT DbData IO a
 -- | Setup all resources needed for the monadic computation then execute it
 -- note: this is expensive, don't call often
 runDbMonad :: TimeTracker.Config -> DbMonad a -> IO a
-runDbMonad config s = mkDbData config >>= runReaderT s'
+runDbMonad config s = do
+        conn   <- openConnection . TimeTracker.connectionInfo $ config
+        dbData <- mkDbData conn config 
+        runReaderT s' dbData
     where s' = setupDbMonad >> s >>= \x -> (cleanupDbMonad >> return x)
 
 -- | for use within this module (not exported)
@@ -61,25 +63,25 @@ commitDb = do
     DbData { connection = c }  <- ask
     liftIO . commit $ c
 
+openConnection :: TimeTracker.ConnectionInfo -> IO Connection
+openConnection (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
+
+setupTables :: IConnection a => a -> TimeTracker.ConnectionInfo -> IO ()
+setupTables a cI = setupBeforeTables a cI >> createTables a
+
+        where   setupBeforeTables :: IConnection a => a -> TimeTracker.ConnectionInfo -> IO ()
+                setupBeforeTables c cI = do
+                        -- enable foreign keys if we're using SQLite
+                        let fkPragma = runRaw c "PRAGMA foreign_keys = ON;"
+                        liftIO . when (TimeTracker.isSqlite cI) $ fkPragma
+
+
+                createTables :: IConnection a => a -> IO ()
+                createTables c = runRaw c createTablesString
+
 setupDbMonad :: DbMonad ()
-setupDbMonad = setupBeforeTables >> createTables >> setupProcEventTypes
-
-    where   setupBeforeTables :: DbMonad ()
-            setupBeforeTables = do
-                    DbData { connection = c }  <- ask
-                    -- enable foreign keys if we're using SQLite
-                    let fkPragma = runRaw c "PRAGMA foreign_keys = ON;"
-                    cI <- connInfo <$> ask
-                    liftIO . when (TimeTracker.isSqlite cI) $ fkPragma
-
-
-            createTables :: DbMonad ()
-            createTables =
-                (createTablesStmt <$> ask) >>= 
-                liftIO . executeRaw >>
-                commitDb
-
-
+setupDbMonad =  setupProcEventTypes
+    where   
             setupProcEventTypes :: DbMonad ()
             setupProcEventTypes = do
                 eventTypes <- Set.fromList . fmap procEventTypeName <$> selectAllProcEventTypes
@@ -103,8 +105,8 @@ sprepare sql = get >>= \s -> liftIO . prepare s $ sql
 
 
 -- \ path TEXT); \ --TODO: add path column to ProcEvents?
-createTablesStmt' :: StatementFunction
-createTablesStmt' =  sprepare "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
+createTablesString :: String
+createTablesString =  "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
                                     \ name TEXT); \
                                 \ CREATE TABLE IF NOT EXISTS ProcEvents( \
@@ -174,18 +176,14 @@ procEventTypeExists :: String -> DbMonad Bool
 procEventTypeExists = fmap isJust . selectProcEventType
 
 -- possibly use StateT on IO to pass the connection?
-mkDbData :: TimeTracker.Config -> IO DbData
-mkDbData conf = do
+mkDbData :: IConnection a => a -> TimeTracker.Config -> IO DbData
+mkDbData c conf = do
         let cI                  =  TimeTracker.connectionInfo conf
-        c                       <- (connect (TimeTracker.connectionInfo conf)) :: IO Connection
-
         evalStateT (mkDbData' cI) c
 
-    where connect (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
-
+    where 
           mkDbData' :: IConnection s => TimeTracker.ConnectionInfo -> StateT s IO DbData
           mkDbData' cI = do
-            cTablesStmt             <- createTablesStmt'
             insProcEventTypeStmt    <- insertProcEventTypeStmt'
             -- XXX: other statements
             insProcEventStmt        <- insertProcEventStmt'
@@ -197,7 +195,6 @@ mkDbData conf = do
 
             return $ DbData { connection = c,
                             connInfo   = cI,
-                            createTablesStmt = cTablesStmt,
                             insertProcEventTypeStmt = insProcEventTypeStmt,
                             insertProcEventStmt = insProcEventStmt,
                             insertTickResolutionStmt = insTickResolutionStmt,
