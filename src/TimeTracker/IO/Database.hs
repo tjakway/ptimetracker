@@ -56,6 +56,11 @@ runDbMonadWithState = runReaderT
 startingProcEventNames :: Set.Set String
 startingProcEventNames = Set.fromList ["Other", "NoEvent", "ProcStart", "ProcEnd"]
 
+commitDb :: DbMonad ()
+commitDb = do
+    DbData { connection = c }  <- ask
+    liftIO . commit $ c
+
 setupDbMonad :: DbMonad ()
 setupDbMonad = setupBeforeTables >> createTables >> setupProcEventTypes
 
@@ -69,7 +74,11 @@ setupDbMonad = setupBeforeTables >> createTables >> setupProcEventTypes
 
 
             createTables :: DbMonad ()
-            createTables = (createTablesStmt <$> ask) >>= liftIO . executeRaw
+            createTables =
+                (createTablesStmt <$> ask) >>= 
+                liftIO . executeRaw >>
+                commitDb
+
 
             setupProcEventTypes :: DbMonad ()
             setupProcEventTypes = do
@@ -77,6 +86,7 @@ setupDbMonad = setupBeforeTables >> createTables >> setupProcEventTypes
                 let missingProcEventTypes = startingProcEventNames `Set.difference` eventTypes
 
                 mapM_ insertProcEventType missingProcEventTypes
+                commitDb
 
         
 data ProcEventType = ProcEventType {
