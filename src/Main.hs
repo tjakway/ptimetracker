@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
 import Data.IORef
@@ -22,15 +23,16 @@ main = let eventCallback pid _ name = putStrLn ("PID called from Haskell: " ++ (
 
 
 
+continueCallback :: IO FFI.StopListeningCallback
 continueCallback = do
             counter <- newIORef 0
-            let continueCallback = \_ -> do
+            let continueCallback' = \_ -> do
                     modifyIORef' counter (+1)
                     count <- readIORef counter
                     putStrLn ("listenUntilCallback' called, count is " ++ (show count))
                     if count > 5 then return (boolToCInt False)
                                  else return (boolToCInt True)
-            return continueCallback
+            return continueCallback'
 
 logCallback :: Integer -> Integer -> String -> DbMonad ()
 logCallback pid procEventTypeInt progName = 
@@ -46,12 +48,18 @@ logCallback pid procEventTypeInt progName =
                                   Just ev -> insertProcEvents [(ev, now, progName)]
 
 
+dbMonadAction :: DbMonad ()
 dbMonadAction = 
         let procRegex = ".*"
             cwdRegex = ".*"
             procM x = addProcMatcher x procRegex False cwdRegex
-            logCallback' = \a b c -> asIOAction . logCallback a b $ c
-        in callbackAsIO logCallback >>= 
-            (liftIO . procM) >> 
-            liftIO . runProgramLogger (procM >> listenUntilCallback continueCallback) >>= \res ->
-            liftIO . putStrLn $ "res = " ++ (show res)
+
+            logCallback' :: DbMonad (EventCallback)
+            logCallback' = callbackAsIO logCallback
+
+        in logCallback' >>= \c ->
+            liftIO $ do
+                continueCallback' <- continueCallback
+                let programLoggerAction = procM c >> listenUntilCallback continueCallback'
+                res <- runProgramLogger programLoggerAction
+                putStrLn $ "res = " ++ (show res)
