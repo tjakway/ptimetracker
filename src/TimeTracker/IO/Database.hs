@@ -113,12 +113,14 @@ createTablesString =  "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ name TEXT); \
                                 \ CREATE TABLE IF NOT EXISTS ProcEvents( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
-                                    \ eventType INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
+                                    \ eventType INTEGER, \
                                     \ when DATETIME, \
-                                    \ programName TEXT); \
+                                    \ programName TEXT, \
+                                    \ FOREIGN KEY (eventType) REFERENCES ProcEventTypes(id)); \
                                 \ CREATE TABLE IF NOT EXISTS TickResolutions( \
-                                    \ id INTEGER FOREIGN KEY REFERENCES ProcEventTypes(id), \
-                                    \ resolutionMillis INTEGER NOT NULL);"
+                                    \ id INTEGER, \
+                                    \ resolutionMillis INTEGER NOT NULL, \
+                                    \ FOREIGN KEY(id) REFERENCES ProcEventTypes(id));"
                                     -- TODO: should TickResolutions use
                                     -- a composite primary key of 
                                     -- (id, resolutionMillis)?
