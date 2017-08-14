@@ -18,23 +18,16 @@ mklibtimetrackerbin:
 cmakelibtimetracker: mklibtimetrackerbin
 	cd libtimetracker/bin && cmake $(LIBTIMETRACKER_ARGS) .. 
 
-#alternatively, can use gcc to convert a static library to a shared one (IF the .a was compiled with -fPIC)
-#gcc -shared -Wl,--whole-archive libtimetracker.a -o libtimetracker.so
-
-.PHONY: mklibtimetracker-alllibs
-mklibtimetracker-alllibs: cmakelibtimetracker
+.PHONY: mklibtimetracker-staticlib
+mklibtimetracker-staticlib: cmakelibtimetracker
 	cd libtimetracker/bin && make -j`nproc`
 
-
-.PHONY: rename-libs
-#cmake can't build static and shared libraries with the same name
-rename-libs: mklibtimetracker-alllibs
-	cd libtimetracker/bin && \
-	    mv libtimetracker_shared.so libtimetracker.so && \
-	    mv libtimetracker_static.a  libtimetracker.a
+.PHONY: mksharedlib
+mksharedlib: mklibtimetracker-staticlib
+	cd libtimetracker/bin && gcc -shared -Wl,--whole-archive,-soname libtimetracker.a -o libtimetracker.so
 
 .PHONY: mklibtimetracker
-mklibtimetracker: rename-libs
+mklibtimetracker: mksharedlib
 
 .PHONY: libtimetrackerclean
 libtimetrackerclean:
