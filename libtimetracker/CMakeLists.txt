@@ -34,7 +34,8 @@ include_directories(SYSTEM ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(SYSTEM ${GTEST_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/test)
 
-add_library(${MAIN_TARGET_LIB} SHARED ${PTIMETRACKER_SRCS_NOT_MAIN})
+add_library(${MAIN_TARGET_LIB} STATIC ${PTIMETRACKER_SRCS_NOT_MAIN})
+set_property(TARGET ${MAIN_TARGET_LIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_executable(${MAIN_TARGET} ${PTIMETRACKER_MAIN_SRC})
 target_link_libraries(${MAIN_TARGET} ${MAIN_TARGET_LIB})
