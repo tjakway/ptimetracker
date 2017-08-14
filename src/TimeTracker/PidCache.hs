@@ -1,5 +1,6 @@
 module TimeTracker.PidCache 
 (
+PidCache,
 initPidCache,
 withPidCache
 )
