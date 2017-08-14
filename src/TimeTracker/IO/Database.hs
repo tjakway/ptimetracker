@@ -2,12 +2,13 @@
 FlexibleContexts #-}
 module TimeTracker.IO.Database 
 (
-DbData(..),
+DbMonad,
 mkDbData,
 runDbMonad,
 insertProcEventType,
 insertProcEvents,
-insertTickResolution
+insertTickResolution,
+callbackAsIO
 )
 where
 
@@ -48,7 +49,7 @@ runDbMonad config s = mkDbData config >>= runReaderT s'
 -- | for use within this module (not exported)
 -- convenient for subcomputations in the DbMonad
 runDbMonadWithState :: DbMonad a -> DbData -> IO a
-runDbMonadWithState s r = runReaderT s' r
+runDbMonadWithState = runReaderT
 
 -- XXX: must be kept up to date with TimeTracker.Interface.ProcEventData--
 -- is there a better way to do this?
