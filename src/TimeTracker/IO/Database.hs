@@ -110,12 +110,12 @@ sprepare sql = get >>= \s -> liftIO . prepare s $ sql
 createTablesString :: String
 createTablesString =  "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
-                                    \ name TEXT); \
+                                    \ name TEXT NOT NULL); \
                                 \ CREATE TABLE IF NOT EXISTS ProcEvents( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
-                                    \ eventType INTEGER, \
+                                    \ eventType INTEGER NOT NULL, \
                                     \ when DATETIME, \
-                                    \ programName TEXT, \
+                                    \ programName TEXT NOT NULL, \
                                     \ FOREIGN KEY (eventType) REFERENCES ProcEventTypes(id)); \
                                 \ CREATE TABLE IF NOT EXISTS TickResolutions( \
                                     \ id INTEGER, \
