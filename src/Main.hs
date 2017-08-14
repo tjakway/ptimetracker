@@ -12,6 +12,7 @@ import TimeTracker.Interface
 import TimeTracker.Types
 import TimeTracker.IO.Database
 import TimeTracker.Config.ConfigTypes
+import TimeTracker.PidCache
 import qualified TimeTracker.FFI as FFI
 
 logDebug :: String -> IO ()
@@ -66,10 +67,10 @@ dbMonadAction =
             cwdRegex = ".*"
             procM x = addProcMatcher x procRegex False cwdRegex
 
-            logCallback' :: DbMonad (EventCallback)
-            logCallback' = callbackAsIO logCallback
+            logCallback' :: IORef PidCache -> DbMonad (EventCallback)
+            logCallback' ref = callbackAsIO logCallback >>= liftIO . return . withPidCache ref
 
-        in logCallback' >>= \c ->
+        in (liftIO initPidCache >>= logCallback') >>= \c ->
             liftIO $ do
                 continueCallback' <- continueCallback
                 let programLoggerAction = procM c >> listenUntilCallback continueCallback'
