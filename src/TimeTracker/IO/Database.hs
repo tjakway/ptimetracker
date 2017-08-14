@@ -107,6 +107,7 @@ sprepare sql = get >>= \s -> liftIO . prepare s $ sql
 
 
 -- \ path TEXT); \ --TODO: add path column to ProcEvents?
+-- SQLite can store time as TEXT, REAL, or INTEGER
 createTablesString :: String
 createTablesString =  "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
@@ -114,7 +115,7 @@ createTablesString =  "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                 \ CREATE TABLE IF NOT EXISTS ProcEvents( \
                                     \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
                                     \ eventType INTEGER NOT NULL, \
-                                    \ when DATETIME, \
+                                    \ when TEXT DEFAULT CURRENT_TIMESTAMP, \
                                     \ programName TEXT NOT NULL, \
                                     \ FOREIGN KEY (eventType) REFERENCES ProcEventTypes(id)); \
                                 \ CREATE TABLE IF NOT EXISTS TickResolutions( \
@@ -129,7 +130,7 @@ insertProcEventTypeStmt' :: StatementFunction
 insertProcEventTypeStmt' = sprepare "INSERT INTO ProcEventTypes(name) VALUES (?)"
 
 insertProcEventStmt' :: StatementFunction
-insertProcEventStmt' = sprepare "INSERT INTO ProcEvents(eventType, when, programName) VALUES (?, ?, ?)"
+insertProcEventStmt' = sprepare "INSERT INTO ProcEvents(eventType, programName) VALUES (?, ?)"
 
 insertTickResolutionStmt' :: StatementFunction
 insertTickResolutionStmt' = sprepare "INSERT INTO TickResolutions(id, resolutionMillis) VALUES (?, ?)"
@@ -148,9 +149,9 @@ insertProcEventType s =
         where s' :: [SqlValue]
               s' = return . toSql $ s
 
-insertProcEvents :: [(ProcEventData, UTCTime, String)] -> DbMonad ()
+insertProcEvents :: [(ProcEventData, String)] -> DbMonad ()
 insertProcEvents xs = (insertProcEventStmt <$> ask) >>= \stmt -> (liftIO $ executeMany stmt xs')
-    where conv (a, b, c) = [toSql . procEventDataToInt $ a, toSql b, toSql c]
+    where conv (a, b) = [toSql . procEventDataToInt $ a, toSql b]
           xs' = map conv xs
 
 -- | the ID is a foreign key into ProcEventType
