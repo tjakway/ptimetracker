@@ -3,7 +3,13 @@ cmake_minimum_required(VERSION 3.1)
 project(PTIMETRACKER)
 
 set(MAIN_TARGET ptimetracker_c)
-set(MAIN_TARGET_LIB timetracker)
+
+set(MAIN_TARGET_LIB_PREFIX timetracker)
+set(MAIN_TARGET_LIB_STATIC ${MAIN_TARGET_LIB_PREFIX}_static)
+set(MAIN_TARGET_LIB_SHARED ${MAIN_TARGET_LIB_PREFIX}_shared)
+#whether we want to link statically or dynamically by default
+set(MAIN_TARGET_LIB ${MAIN_TARGET_LIB_SHARED})
+
 set(TEST_TARGET test_ptimetracker)
 set(ROOT_TEST_TARGET root_test_ptimetracker)
 
@@ -34,7 +40,17 @@ include_directories(SYSTEM ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(SYSTEM ${GTEST_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/test)
 
-add_library(${MAIN_TARGET_LIB} SHARED ${PTIMETRACKER_SRCS_NOT_MAIN})
+
+# see https://stackoverflow.com/questions/2152077/is-it-possible-to-get-cmake-to-build-both-a-static-and-shared-version-of-the-sam
+# this is the "object library" target: compiles the sources only once
+add_library(objlib OBJECT ${PTIMETRACKER_SRCS_NOT_MAIN})
+# shared libraries need PIC
+set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# shared and static libraries built from the same object files
+add_library(${MAIN_TARGET_LIB_SHARED} SHARED $<TARGET_OBJECTS:objlib>)
+add_library(${MAIN_TARGET_LIB_STATIC} STATIC $<TARGET_OBJECTS:objlib>)
+
 
 add_executable(${MAIN_TARGET} ${PTIMETRACKER_MAIN_SRC})
 target_link_libraries(${MAIN_TARGET} ${MAIN_TARGET_LIB})
