@@ -43,7 +43,9 @@ type DbMonad a = ReaderT DbData IO a
 -- note: this is expensive, don't call often
 runDbMonad :: TimeTracker.Config -> DbMonad a -> IO a
 runDbMonad config s = do
-        conn   <- openConnection . TimeTracker.connectionInfo $ config
+        let cI =  TimeTracker.connectionInfo config
+        conn   <- openConnection cI
+        setupTables conn cI
         dbData <- mkDbData conn config 
         runReaderT s' dbData
     where s' = setupDbMonad >> s >>= \x -> (cleanupDbMonad >> return x)
