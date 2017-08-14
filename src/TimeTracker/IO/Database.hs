@@ -68,7 +68,7 @@ openConnection :: TimeTracker.ConnectionInfo -> IO Connection
 openConnection (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
 
 setupTables :: IConnection a => a -> TimeTracker.ConnectionInfo -> IO ()
-setupTables a cI = setupBeforeTables a cI >> createTables a
+setupTables a cI = setupBeforeTables a cI >> createTables a >> commit a
 
         where   setupBeforeTables :: IConnection a => a -> TimeTracker.ConnectionInfo -> IO ()
                 setupBeforeTables c cI = do
@@ -109,12 +109,12 @@ sprepare sql = get >>= \s -> liftIO . prepare s $ sql
 -- SQLite can store time as TEXT, REAL, or INTEGER
 createTablesString :: String
 createTablesString =  "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
-                                    \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
+                                    \ id INTEGER PRIMARY KEY, \
                                     \ name TEXT NOT NULL); \
                                 \ CREATE TABLE IF NOT EXISTS ProcEvents( \
-                                    \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
+                                    \ id INTEGER PRIMARY KEY, \
                                     \ eventType INTEGER NOT NULL, \
-                                    \ when TEXT DEFAULT CURRENT_TIMESTAMP, \
+                                    \ evTime TEXT DEFAULT CURRENT_TIMESTAMP, \
                                     \ programName TEXT NOT NULL, \
                                     \ FOREIGN KEY (eventType) REFERENCES ProcEventTypes(id)); \
                                 \ CREATE TABLE IF NOT EXISTS TickResolutions( \
@@ -169,7 +169,11 @@ selectProcEventType name = (selectProcEventTypeStmt <$> ask) >>=
                 where name' = [toSql name]
 
 selectAllProcEventTypes :: DbMonad [ProcEventType]
-selectAllProcEventTypes = ((selectAllProcEventTypesStmt <$> ask) >>= liftIO . fetchAllRows') >>= return . map f
+selectAllProcEventTypes = ((selectAllProcEventTypesStmt <$> ask) >>= \s -> 
+        liftIO (execute s [] >>
+                fetchAllRows' s)) >>=
+        return . map f
+
     where f xs = let at' c = fromSql . atNote "error retrieving record in selectAllProcEventTypes" c
                      id   = xs `at'` 0
                      name = xs `at'` 1
