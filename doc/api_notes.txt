@@ -1,0 +1,1 @@
+progName will be an empty string if EventCallback is invoked on PROC_END
