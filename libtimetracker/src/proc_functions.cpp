@@ -82,10 +82,17 @@ namespace ptimetracker {
             {
                 eventCallback(pid, eventType, info->procName.get()->c_str());
             }
-            else 
+            //if the program exited it won't be in the /proc filesystem anymore
+            //don't try and read or we'll get an error
+            else if(eventType != PROC_END)
             {
                 std::string procName = ProcInfo::readProcName(state, pid, nullptr);
                 eventCallback(pid, eventType, procName.c_str());
+            }
+            else
+            {
+                //call it with an unknown proc name
+                eventCallback(pid, eventType, "");
             }
         }
     }
