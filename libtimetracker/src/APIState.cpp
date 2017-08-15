@@ -80,8 +80,7 @@ public:
     }
 
     /**
-     * **WARNING** NOT SAFE
-     * s must be null-terminated
+     * **WARNING** NOT SAFE: s must be null-terminated
      */
     void writeLog(const char* s)
     {
@@ -96,8 +95,7 @@ public:
     }
 
     /**
-     * **WARNING** NOT SAFE
-     * s must be null-terminated
+     * **WARNING** NOT SAFE: s must be null-terminated
      */
     void writeErr(const char* s)
     {
