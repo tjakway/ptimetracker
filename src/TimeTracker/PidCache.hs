@@ -25,16 +25,22 @@ withPidCache cache f = \pid eventCode progName ->
                                         -- cache
         f' = f pid eventCode progName
         pid' = fromInteger pid
+        isProcStartOrTick e = e == FFI.ProcStart || 
+                                (e /= FFI.ProcEnd &&
+                                 e /= FFI.Other   &&
+                                 e /= FFI.NoEvent)
         in case eventCode' of Nothing -> f'
-                              -- only write to the cache on ProcStart
-                              Just (FFI.ProcStart) -> do
-                                  modifyIORef' cache (insert pid' progName)
-                                  f'
-                              Just (FFI.ProcEnd) -> do
-                                  hasPid <- Map.lookup pid' <$> readIORef cache
-                                  -- if we don't have the PID in the cache,
-                                  -- filter out the PROC_END event
-                                  case hasPid of Nothing -> return ()
-                                                 Just _  -> f'
-                              _ -> f'
+                              -- write to the cache on proc start or tick
+                              -- events
+                              Just event
+                                | isProcStartOrTick event -> do
+                                    modifyIORef' cache (insert pid' progName)
+                                    f'
+                                | event == FFI.ProcEnd -> do
+                                    hasPid <- Map.lookup pid' <$> readIORef cache
+                                    -- if we don't have the PID in the cache,
+                                    -- filter out the PROC_END event
+                                    case hasPid of Nothing -> return ()
+                                                   Just _  -> f'
+                              _  -> f'
 

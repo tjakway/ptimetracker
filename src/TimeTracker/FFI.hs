@@ -81,6 +81,7 @@ data ProcMatchEventType = Other
                         | NoEvent 
                         | ProcStart 
                         | ProcEnd
+                        deriving (Eq)
 
 procMatchEventTypeToInt :: ProcMatchEventType -> CProcMatchEventType
 procMatchEventTypeToInt Other     = -2
