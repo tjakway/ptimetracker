@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <mutex>
+#include <string>
 
 #include <cstdlib>
 #include <cstring>
@@ -25,6 +26,24 @@
 namespace ptimetracker {
 
 NEW_EXCEPTION_TYPE(WriteSyscallException);
+NEW_EXCEPTION_TYPE(CloseFdException);
+
+}
+
+namespace {
+    void closeOrThrow(const int fd, const std::string& fdName)
+    {
+        if(close(fd) != 0)
+        {
+            const std::string errMsg(strerror(errno));
+            throw ptimetracker::CloseFdException("Error while closing file descriptor: " 
+                    + fdName);
+        }
+    }
+}
+
+
+namespace ptimetracker {
 
 class APIState 
 {
@@ -70,13 +89,15 @@ public:
     void setOutFd(int newFd)
     {
         std::lock_guard<std::mutex> lock(outFdMutex);
-        outFd = dup2(outFd, newFd);
+        closeOrThrow(outFd, "outFd");
+        outFd = newFd;
     }
 
     void setErrFd(int newFd)
     {
         std::lock_guard<std::mutex> lock(errFdMutex);
-        errFd = dup2(errFd, newFd);
+        closeOrThrow(errFd, "errFd");
+        errFd = newFd;
     }
 
     /**
