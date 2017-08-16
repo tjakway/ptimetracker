@@ -94,4 +94,5 @@ options =
 
 
 
-
+applyLogLevelPriority :: String -> Config -> IO ()
+applyLogLevelPriority whichLogger = LogLevel.updateGlobalLogger whichLogger . LogLevel.setLevel . loggingPriority
