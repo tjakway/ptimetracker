@@ -62,6 +62,16 @@ foreign import ccall "wrapper"
 foreign import ccall "wrapper"
     wrapStopListeningCallback :: StopListeningCallback -> IO (StopListeningCallbackFunPtr)
 
+-- Redirecting log functions
+
+-- | redirect regular-priority log messages
+foreign import ccall "APIState.h apiSetOutFd"
+    apiSetOutFd :: APIStatePtr -> CInt -> IO ()
+
+-- | redirect error-priority log messages
+foreign import ccall "APIState.h apiSetErrFd"
+    apiSetErrFd :: APIStatePtr -> CInt -> IO ()
+
 
 -- cnMsg functions
 foreign import ccall "APIState.h cnMsgGetProcMatchEventType"

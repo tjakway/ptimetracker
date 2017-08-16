@@ -3,6 +3,7 @@ module TimeTracker.Types where
 import TimeTracker.FFI
 import Foreign.Ptr (freeHaskellFunPtr, nullPtr)
 import Control.Monad.State.Strict
+import System.Posix.IO
 
 data ProgramLoggerS = ProgramLoggerS {
                     eventCallbacks :: [CEventCallbackFunPtr],
@@ -24,6 +25,15 @@ type ProgramLoggerM a = StateT ProgramLoggerS IO a
 getAPIState :: ProgramLoggerM APIStatePtr
 getAPIState = apiState <$> get
 
+redirectNativeLog :: FilePath -> (APIStatePtr -> CInt -> IO ()) -> ProgramLoggerM ()
+redirectNativeLog dest logFunction = do
+        apiStatePtr <- getAPIState
+        fd <- openFd dest WriteOnly Nothing defaultFileFlags
+        liftIO . logFunction APIStatePtr $ fd
+
+-- | redirect native logging -> /dev/null
+setupNativeLogging :: ProgramLoggerM ()
+setupNativeLogging = redirectNativeLog "/dev/null" apiSetOutFd
 
 cleanupProgramLogger :: ProgramLoggerM ()
 cleanupProgramLogger = get >>= \s -> liftIO $ do
@@ -39,6 +49,7 @@ cleanupProgramLogger = get >>= \s -> liftIO $ do
 execProgramLogger :: ProgramLoggerM a -> IO (a, ProgramLoggerS)
 execProgramLogger stateAction = do
         apiStatePtr <- initializeAPIState
+        setupNativeLogging
 
         let start = emptyProgramLoggerS { apiState = apiStatePtr }
             stateAction' = stateAction >>= (\x -> cleanupProgramLogger >> return x)
