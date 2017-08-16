@@ -212,18 +212,6 @@ extern "C" {
         delete state;
     }
 
-    /**
-     * begin listening for proc events in a loop
-     * This function won't return until the process ends
-     */
-    int startListening(void* state)
-    {
-        return 1;
-            //TODO
-        //return register_proc_msg_handler(state);
-    }
-
-
     //threadsafe
     void apiSetOutFd(void* s, int newFd)
     {

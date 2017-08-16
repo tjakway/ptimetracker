@@ -41,9 +41,6 @@ foreign import ccall "APIState.h execMatches"
 foreign import ccall "APIState.h setAPIStateErrorCallback"
     setAPIStateErrorCallback :: APIStatePtr -> ErrorCallbackFunPtr -> IO ()
 
-foreign import ccall "APIState.h startListening"
-    startListening :: APIStatePtr -> IO (CInt)
-
 foreign import ccall "APIState.h listenForMessagesForever"
     listenForMessagesForever :: APIStatePtr -> IO (CInt)
 

@@ -13,6 +13,7 @@ import TimeTracker.Types
 import TimeTracker.IO.Database
 import TimeTracker.Config.ConfigTypes
 import TimeTracker.PidCache
+import TimeTracker.Callbacks
 import qualified TimeTracker.FFI as FFI
 
 logDebug :: String -> IO ()

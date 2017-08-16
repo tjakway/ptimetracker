@@ -1,5 +1,20 @@
 module TimeTracker.Callbacks where
 
+-- TODO: remove unused imports
+import System.IO
+import System.Exit
+import qualified System.Log.Logger as Logger
+import Control.Monad (when)
+import Data.IORef
+import Control.Monad.IO.Class (liftIO)
+import System.Posix.User
+import TimeTracker.Interface
+import TimeTracker.Types
+import TimeTracker.IO.Database
+import TimeTracker.Config.ConfigTypes
+import TimeTracker.PidCache
+import qualified TimeTracker.FFI as FFI
+
 
 -- | run a certain number of times
 countCallback :: Int -> IO FFI.StopListeningCallback
@@ -37,7 +52,6 @@ dbMonadAction logError =
 
         in (liftIO initPidCache >>= logCallback') >>= \c ->
             liftIO $ do
-                continueCallback' <- continueCallback
-                let programLoggerAction = procM c >> listenUntilCallback continueCallback'
+                let programLoggerAction = procM c >> listenForever
                 res <- runProgramLogger programLoggerAction
                 putStrLn $ "res = " ++ (show res)

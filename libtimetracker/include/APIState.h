@@ -55,8 +55,6 @@ extern "C" {
     void freeAPIState(void*);
 
     //listening functions
-    int startListening(void*);
-
     int listenForMessagesForever(void*);
     int listenUntilElapsed(void*, unsigned long);
     int listenUntilCallback(void*, bool (*callback)(struct cn_msg*));
