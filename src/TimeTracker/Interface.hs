@@ -64,6 +64,8 @@ addProcMatcher callback procRegex matchOnlyProgName cwdRegex = do
             let matchOnlyProgName' = boolToCInt matchOnlyProgName
             return (procRegexCStr, matchOnlyProgName', cwdRegexCStr)
 
+listenForever :: ProgramLoggerM (CInt)
+listenForever = getAPIState >>= liftIO . FFI.listenForMessagesForever
 
 listenUntilCallback :: FFI.StopListeningCallback -> ProgramLoggerM (CInt)
 listenUntilCallback f = do
