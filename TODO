@@ -4,3 +4,8 @@
     perl -pi -e 's/(?<=add_library\(${MAIN_TARGET_LIB})\s*STATIC\s*(?=${PTIMETRACKER_SRCS_NOT_MAIN}\))/SHARED/g' libtimetracker/CMakeLists.txt
 
     (might want to have perl write to a temp file and then use cmake -P ...)
+
+-----------------------
+
+
+* note: don't have to implement behavior to never insert rows with blank program name because the user would have to pass .* to get that behavior anyway
