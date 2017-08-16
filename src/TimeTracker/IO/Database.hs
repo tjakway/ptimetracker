@@ -86,10 +86,9 @@ setupDbMonad =  setupProcEventTypes
             setupProcEventTypes :: DbMonad ()
             setupProcEventTypes = do
                 eventTypes <- Set.fromList . fmap procEventTypeName <$> selectAllProcEventTypes
-                let missingProcEventTypes = startingProcEventNames `Set.difference` eventTypes
-
-                mapM_ insertProcEventType missingProcEventTypes
-                commitDb
+                when (null eventTypes) $ do
+                    mapM_ insertProcEventType startingProcEventNames
+                    commitDb
 
         
 data ProcEventType = ProcEventType {
