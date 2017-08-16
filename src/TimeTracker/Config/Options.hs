@@ -61,6 +61,10 @@ readLogPriority priorityStr = maybeToEither failedParseMessage . tryVerbose . tr
         recover _   (Just x) = Just x
         recover alt Nothing  = alt
 
+parseLogPriority :: Flag -> Either String LogLevel.Priority
+parseLogPriority (LogPriority s) = readLogPriority s
+parseLogPriority _ = Left "Flag is not LogPriority"
+
 readMaybe :: Read a => String -> Maybe a
 readMaybe = verify . stripWhitespace . reads 
     where stripWhitespace = map (\(a, t) -> (a, strip t))
@@ -71,6 +75,14 @@ readMaybe = verify . stripWhitespace . reads
 -- TODO: write configuration defaults
 flagsToConfig :: [Flag] -> Either String Config
 flagsToConfig [] = Left "No flags passed."
+    where parseLogLevel :: [Flag] -> Either String LogLevel.Priority
+          parseLogLevel = mkFlagParser parseLogPriority
+
+mkFlagParser :: (Flag -> Either String a) -> ([Flag] -> Either String a)
+mkFlagParser p = foldr f (Left "") 
+    -- try parsing every flag until we're out or we've succeeded
+    where f _ (Right x) = Right x
+          f thisFlag (Left _)  = p thisFlag
 
 options :: [OptDescr Flag]
 options = 
