@@ -86,6 +86,7 @@ data ProcEventData = Other
                    | NoEvent
                    | ProcStart FFI.PidT 
                    | ProcEnd FFI.ExitCode
+                    deriving Show
 
 -- can't make it an enum because it has non-nullary constructors
 

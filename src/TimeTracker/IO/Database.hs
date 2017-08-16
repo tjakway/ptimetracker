@@ -13,12 +13,13 @@ callbackAsIO
 )
 where
 
-import TimeTracker.Interface (ProcEventData, procEventDataToInt, EventCallback)
+import TimeTracker.Interface (ProcEventData(..), procEventDataToInt, EventCallback)
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Maybe (isJust)
 import qualified Data.Set as Set
+import qualified Data.Map.Strict as Map
 import Safe
 import Control.Monad.Reader
 import Control.Monad.State.Strict
@@ -57,8 +58,12 @@ runDbMonadWithState = runReaderT
 
 -- XXX: must be kept up to date with TimeTracker.Interface.ProcEventData--
 -- is there a better way to do this?
-startingProcEventNames :: Set.Set String
-startingProcEventNames = Set.fromList ["Other", "NoEvent", "ProcStart", "ProcEnd"]
+startingProcEventNames :: Map.Map Int String
+startingProcEventNames = Map.fromList xs
+    where xs = map (\x -> (procEventDataToInt x, show x)) [Other, NoEvent, ProcStart ignoredArg, ProcEnd ignoredArg]
+          -- the constructor argument will be ignored, see
+          -- procEventDataToInt
+          ignoredArg = -1
 
 commitDb :: DbMonad ()
 commitDb = do
