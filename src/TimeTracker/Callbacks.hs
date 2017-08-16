@@ -39,7 +39,7 @@ logCallback logError pid procEventTypeInt progName =
         in do
             -- TODO: fix line length
             case procEventData of Nothing -> liftIO $ logError ("Received unknown event type from progName" ++ progName)
-                                  Just ev -> insertProcEvents [(ev, progName)]
+                                  Just ev -> insertProcEvents [(ev, progName)] >> commitDb
 
 dbMonadAction :: (String -> IO ()) -> DbMonad ()
 dbMonadAction logError = 
@@ -47,6 +47,10 @@ dbMonadAction logError =
             cwdRegex = ".*"
             procM x = addProcMatcher x procRegex False cwdRegex
 
+            -- wrap logCallback in a PidCache to filter out PROC_FAILURE
+            -- events we don't have information on
+            -- (i.e. PROC_FAILURE events where we can't find the program
+            -- name and therefore don't care about)
             logCallback' :: IORef PidCache -> DbMonad (EventCallback)
             logCallback' ref = callbackAsIO (logCallback logError) >>= liftIO . return . withPidCache ref
 

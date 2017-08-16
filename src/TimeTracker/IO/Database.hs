@@ -8,6 +8,7 @@ runDbMonad,
 insertProcEventType,
 insertProcEvents,
 insertTickResolution,
+commitDb,
 callbackAsIO
 )
 where
