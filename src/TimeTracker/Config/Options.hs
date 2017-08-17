@@ -7,11 +7,13 @@ import TimeTracker.Config.ConfigTypes
 import System.Console.GetOpt
 import qualified System.Log.Logger as LogLevel
 
-data Flag = EnableTicks
+data Flag = EnableTicks -- XXX <- should call TickResolution with a default value
+                        -- implement recursively
           | DbUrl String
           | DbUsername String
           | DbPassword String
-          | LogPriority String
+          | LogPriority String -- XXX
+          | TickResolution Int -- XXX
     deriving (Show, Eq)
 
 -- from https://hackage.haskell.org/package/MissingH-1.4.0.1/docs/Data-Either-Utils.html
