@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module TimeTracker.PidCache 
 (
 PidCache,
@@ -29,12 +30,17 @@ withPidCache cache f = \pid eventCode progName ->
                                 (e /= FFI.ProcEnd &&
                                  e /= FFI.Other   &&
                                  e /= FFI.NoEvent)
+
+        -- atomic version that matches the signature of modifyIORef'
+        atomicModifyIORefFst' :: IORef a -> (a -> a) -> IO ()
+        atomicModifyIORefFst' ref g = atomicModifyIORef' ref (\a -> (g a, ()))
+
         in case eventCode' of Nothing -> f' progName
                               -- write to the cache on proc start or tick
                               -- events
                               Just event
                                 | isProcStartOrTick event -> do
-                                    atomicModifyIORef' cache (insert pid' progName)
+                                    atomicModifyIORefFst' cache (insert pid' progName)
                                     f' progName
                                 -- if the event is PROC_END the passed
                                 -- progName will be the empty string
@@ -46,5 +52,7 @@ withPidCache cache f = \pid eventCode progName ->
                                     -- if we don't have the PID in the cache,
                                     -- filter out the PROC_END event
                                     case hasPid of Nothing -> return ()
-                                                   Just foundProgName  -> f' foundProgName
+                                                   Just foundProgName  -> do
+                                                       atomicModifyIORefFst' cache (Map.delete pid')
+                                                       f' foundProgName
 
