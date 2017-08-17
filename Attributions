@@ -2,6 +2,8 @@ Though the library is not used, TimeTracker.Config.Options implements maybeToEit
 I didn't want to include an entire library for one function but this is still a derived work of MissingH.
 Credit to John Goerzen, Copyright (C) 2004-2011, BSD3 Licensed.
 see https://hackage.haskell.org/package/MissingH-1.4.0.1/docs/Data-Either-Utils.html and https://github.com/jgoerzen/missingh
+Edit: the same module now also implements strip from Data.String.Utils
+
 License text follows:
 
 ```
