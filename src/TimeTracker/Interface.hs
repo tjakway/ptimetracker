@@ -86,7 +86,13 @@ data ProcEventData = Other
                    | NoEvent
                    | ProcStart FFI.PidT 
                    | ProcEnd FFI.ExitCode
-                    deriving Show
+
+-- explicit show instance to ignore constructor args
+instance Show ProcEventData where
+        show Other = "Other"
+        show NoEvent = "NoEvent"
+        show (ProcStart _) = "ProcStart"
+        show (ProcEnd _) = "ProcEnd"
 
 -- can't make it an enum because it has non-nullary constructors
 
