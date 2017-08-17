@@ -17,17 +17,22 @@ namespace {
 
 namespace ptimetracker {
 
-std::string readFile(std::string inFileName)
+/**
+ * takes the state pointer for logging
+ */
+std::string readFile(void* state, std::string inFileName)
 {
     //see https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
     std::ifstream ifs;
     //open the input file
     ifs.open(inFileName);
 
+    const std::string emptyFileMsg = "Warning: reading empty file " + inFileName + "\n";
+    
     //don't read it if it doesn't exist
     if(!ifs.good())
     {
-        std::clog << "Warning: reading empty file " << inFileName << std::endl;
+        apiWriteLog(state, emptyFileMsg.c_str());
         return std::string();
     }
 
@@ -35,7 +40,9 @@ std::string readFile(std::string inFileName)
     strStream << ifs.rdbuf();
     auto retStr = strStream.str();
     if(retStr.empty())
-        std::clog << "Warning: reading empty file " << inFileName << std::endl;
+    {
+        apiWriteLog(state, emptyFileMsg.c_str());
+    }
     return stripNewlines(retStr);
 }
 

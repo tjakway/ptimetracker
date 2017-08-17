@@ -98,15 +98,6 @@ namespace ptimetracker {
     }
 
 
-    void ProcInfo::checkRealpathErrno(char* allocedPath) {
-        if(allocedPath == nullptr) {
-            //there's an error, find out what it is
-            //don't just check errno because it might have been set from a previous call
-
-            throw RealpathException(std::string(strerror(errno)));
-        }
-    }
-
     std::string ProcInfo::readCmdLine(void* state, pid_t pid, ProcInfo* info)
     {
         if(info != nullptr && info->cmdLine.get() != nullptr) {
@@ -117,7 +108,7 @@ namespace ptimetracker {
         // replace them with spaces
         std::string cmdLine = 
             std::regex_replace(
-                    readFile("/proc/" + std::to_string(pid) + "/cmdline"),
+                    readFile(state, "/proc/" + std::to_string(pid) + "/cmdline"),
                     std::regex(R"(\0)"),
                     " ");
 
@@ -135,7 +126,7 @@ namespace ptimetracker {
             return *info->procName;
         }
 
-        std::string procName = readFile("/proc/" + std::to_string(pid) + "/comm");
+        std::string procName = readFile(state, "/proc/" + std::to_string(pid) + "/comm");
 
         if(info != nullptr) {
             info->procName = std::unique_ptr<std::string>(new std::string(procName));
@@ -156,21 +147,20 @@ namespace ptimetracker {
 
         std::string absCwd;
         char* allocedPath = nullptr;
-        try {
-            allocedPath = realpath(cwdPath.c_str(), nullptr);
-            checkRealpathErrno(allocedPath);
 
-            absCwd = allocedPath;
-            if(info != nullptr) {
-                info->cwd = std::unique_ptr<std::string>(new std::string(absCwd));
-            }
-
-        } catch(RealpathException const& e)
-        {
-            auto msg = "Caught RealpathException in " + std::string(__func__)
-                    + ", returning empty string\n";
-            apiWriteErr(state, msg.c_str());
+        allocedPath = realpath(cwdPath.c_str(), nullptr);
+        if(allocedPath == nullptr) {
+            //can't get the cwd, return an empty string
+            const std::string msg = "Warning in" + std::string(__func__) + ": could not read cwd at " + cwdPath + "\n";
+            apiWriteLog(state, msg.c_str());
             absCwd = "";
+        }
+        else {
+            absCwd = allocedPath;
+        }
+
+        if(info != nullptr) {
+            info->cwd = std::unique_ptr<std::string>(new std::string(absCwd));
         }
 
         //realpath will allocate a c string when the 2nd arg is NULL
