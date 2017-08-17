@@ -34,7 +34,7 @@ withPidCache cache f = \pid eventCode progName ->
                               -- events
                               Just event
                                 | isProcStartOrTick event -> do
-                                    modifyIORef' cache (insert pid' progName)
+                                    atomicModifyIORef' cache (insert pid' progName)
                                     f' progName
                                 -- if the event is PROC_END the passed
                                 -- progName will be the empty string
