@@ -23,24 +23,28 @@ withPidCache cache f = \pid eventCode progName ->
     let eventCode' = FFI.intToProcMatchEventType (fromInteger eventCode)
                                         -- unknown event type, skip the
                                         -- cache
-        f' = f pid eventCode progName
+        f' = f pid eventCode
         pid' = fromInteger pid
         isProcStartOrTick e = e == FFI.ProcStart || 
                                 (e /= FFI.ProcEnd &&
                                  e /= FFI.Other   &&
                                  e /= FFI.NoEvent)
-        in case eventCode' of Nothing -> f'
+        in case eventCode' of Nothing -> f' progName
                               -- write to the cache on proc start or tick
                               -- events
                               Just event
                                 | isProcStartOrTick event -> do
                                     modifyIORef' cache (insert pid' progName)
-                                    f'
+                                    f' progName
+                                -- if the event is PROC_END the passed
+                                -- progName will be the empty string
+                                -- in that case we have to look it up
+                                -- if we can't find it, don't invoke the
+                                -- EventCallback
                                 | event == FFI.ProcEnd -> do
                                     hasPid <- Map.lookup pid' <$> readIORef cache
                                     -- if we don't have the PID in the cache,
                                     -- filter out the PROC_END event
                                     case hasPid of Nothing -> return ()
-                                                   Just _  -> f'
-                              _  -> f'
+                                                   Just foundProgName  -> f' foundProgName
 
