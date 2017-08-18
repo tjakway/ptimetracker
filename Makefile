@@ -73,7 +73,7 @@ backup-cmakelists:
 
 .PHONY: restore-cmakelists
 restore-cmakelists: 
-	cp $(CMAKELISTS_BACKUP) libtimetracker/CMakeLists.txt
+	mv $(CMAKELISTS_BACKUP) libtimetracker/CMakeLists.txt
 
 
 #build shared libraries
