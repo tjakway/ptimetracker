@@ -9,7 +9,8 @@ insertProcEventType,
 insertProcEvents,
 insertTickResolution,
 commitDb,
-callbackAsIO
+callbackAsIO,
+bracketOnErrorM_
 )
 where
 
@@ -229,10 +230,6 @@ callbackAsIO :: (Integer -> Integer -> String -> DbMonad ()) -> DbMonad EventCal
 callbackAsIO callback = do
         dbData <- ask 
         return $ \a b c -> runDbMonadWithState (callback a b c) dbData
-
-
---x :: Monad m =>
---     m (IO a) -> m (a -> IO b) -> m (a -> IO c) -> m (IO c)
 
 
 bracketOnErrorM_ :: DbMonad a -> DbMonad b -> DbMonad c -> DbMonad c
