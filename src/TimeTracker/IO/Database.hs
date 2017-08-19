@@ -241,11 +241,11 @@ bracketOnErrorM_ a b c = (liftM3 bracketOnError) a' b' c' >>= liftIO
           run' :: DbMonad a -> DbMonad (IO a)
           run' x = runDbMonadWithState x <$> ask
 
-          run2' :: DbMonad b -> DbMonad (a -> IO b)
-          run2' f = do
+          runConst' :: DbMonad b -> DbMonad (a -> IO b)
+          runConst' f = do
               s <- ask
               return $ \_ -> runDbMonadWithState f s
 
           a'    = run' a
-          b'    = run2' b
-          c'    = run2' c
+          b'    = runConst' b
+          c'    = runConst' c
