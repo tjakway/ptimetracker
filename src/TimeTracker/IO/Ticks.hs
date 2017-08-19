@@ -1,9 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module TimeTracker.IO.Ticks where
 
-import Control.Exception
 import Control.Monad.IO.Class (liftIO)
-import Data.Typeable
 import qualified Data.Map.Strict as Map
 import System.Directory
 import TimeTracker.ProcEventType
