@@ -1,8 +1,9 @@
 {-# LANGUAGE ExistentialQuantification, Rank2Types, ScopedTypeVariables,
-FlexibleContexts #-}
+FlexibleContexts, DeriveDataTypeable #-}
 module TimeTracker.IO.Database 
 (
 DbMonad,
+logWarning,
 mkDbData,
 runDbMonad,
 insertProcEventType,
@@ -22,15 +23,18 @@ import TimeTracker.Interface (ProcEventData(..), procEventDataToInt, EventCallba
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
+import Data.Typeable
 import Data.Convertible.Base (Convertible)
 import Data.Maybe (isJust)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import Safe
+import Control.Exception
 import Control.Monad (liftM3)
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 import Control.Exception (bracketOnError)
+import System.Log.Logger
 
 data DbData = 
     forall a . IConnection a => 
@@ -48,6 +52,9 @@ data DbData =
         }
 
 type DbMonad a = ReaderT DbData IO a
+
+logWarning :: String -> DbMonad ()
+logWarning = liftIO . warningM "DbMonad"
 
 -- | Setup all resources needed for the monadic computation then execute it
 -- note: this is expensive, don't call often
@@ -188,6 +195,24 @@ insertTickResolution :: Int -> Int -> DbMonad Int
 insertTickResolution resolutionMillis procEventTypeId  = 
         (insertTickResolutionStmt <$> ask) >>= (liftIO . fmap fromInteger . (\stmt -> execute stmt values))
     where values = [toSql procEventTypeId, toSql resolutionMillis]
+
+tickEventName :: String
+tickEventName = "Tick"
+
+data TickException = TickException
+    deriving (Show, Typeable)
+
+instance Exception TickException
+
+
+insertTickTypeIfNotExists :: Int -> DbMonad Int
+insertTickTypeIfNotExists resolution = do
+        tickId <- selectTickTypeByResolution resolution
+        case tickId of Just x -> return x
+                       Nothing -> do
+                              maybeTypeId <- insertProcEventTypeByName tickEventName
+                              case maybeTypeId of Just typeId -> insertTickResolution resolution typeId >> return typeId
+                                                  Nothing -> liftIO . throwIO $ TickException
 
 selectSingleRow :: Convertible SqlValue a => (DbData -> Statement) -> [SqlValue] -> DbMonad (Maybe a)
 selectSingleRow sel params = (sel <$> ask) >>= 
