@@ -106,3 +106,10 @@ cabalbuild-shared: cabalconf-shared
 
 .PHONY: shared
 shared: cabalbuild-shared
+
+
+#misc commands
+
+.PHONY: repl
+repl:
+	cabal repl
