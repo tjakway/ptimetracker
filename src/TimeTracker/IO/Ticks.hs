@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module TimeTracker.IO.Ticks where
 
 import Control.Exception
@@ -8,42 +8,33 @@ import qualified Data.Map.Strict as Map
 import System.Directory
 import TimeTracker.ProcEventType
 import TimeTracker.IO.Database
+import TimeTracker.Interface (ProcEventData(..))
 import qualified TimeTracker.FFI as FFI
 import TimeTracker.PidCache
 
 
-data TickException = TickException
-    deriving (Show, Typeable)
 
-instance Exception TickException
-
-tickEventName :: String
-tickEventName = "Tick"
-
-procDirExists :: FFI.PidT -> IO Bool
-procDirExists = doesDirectoryExist . procDir
+procDirExists :: FFI.PidT -> DbMonad Bool
+procDirExists = liftIO . doesDirectoryExist . procDir
     where procDir :: FFI.PidT -> FilePath
           procDir = mappend "/proc/" . show
 
--- | check that we have it in the cache and that the /proc/<PID> dir exists
-isRunning :: PidCache -> FFI.PidT -> IO Bool
-isRunning cache pid = case Map.lookup pid cache of
-                          Just _ -> procDirExists pid
-                          Nothing -> return False
-
-recordTicks :: ProcEventType -> PidCache -> Int -> DbMonad ()
-recordTicks evType cache eventId = bracketOnErrorM_ (return ()) rollbackDb rec'
+recordTicks :: ProcEventType -> PidCache -> DbMonad ()
+recordTicks evType cache = bracketOnErrorM_ (return ()) rollbackDb rec'
     where tickEventId = procEventTypeId evType
-          rec' = do
-              undefined -- XXX
+          rec' = mapM_ f' . Map.toList $ cache
+          f' (pid, progName) = do
+              isRunning <- procDirExists pid
+              if isRunning then recordTick tickEventId progName
+                           else logWarning $ "Program " ++ 
+                                    show progName ++ 
+                                    " with PID " ++ 
+                                    show pid ++ 
+                                    " exists in the PidCache " ++
+                                    "but its /proc/ folder doesn't exist"
 
 
-insertTickType :: Int -> DbMonad Int
-insertTickType resolution = do
-        tickId <- selectTickTypeByResolution resolution
-        case tickId of Just x -> return x
-                       Nothing -> do
-                              maybeTypeId <- insertProcEventTypeByName tickEventName
-                              case maybeTypeId of Just typeId -> insertTickResolution resolution typeId >> return typeId
-                                                  Nothing -> liftIO . throwIO $ TickException
-                                            
+
+
+recordTick :: Int -> String -> DbMonad ()
+recordTick eventId progName = insertProcEvents [(Tick eventId, progName)]
