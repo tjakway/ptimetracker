@@ -29,12 +29,12 @@ countCallback limit = do
             return continueCallback'
 
 
-logCallback :: (String -> IO ()) -> Integer -> Integer -> String -> DbMonad ()
+logCallback :: (String -> IO ()) -> Int -> Int -> String -> DbMonad ()
 logCallback logError pid procEventTypeInt progName = 
-        let procEventData = FFI.intToProcMatchEventType (fromInteger procEventTypeInt) >>= 
+        let procEventData = FFI.intToProcMatchEventType (fromIntegral procEventTypeInt) >>= 
                    \x -> case x of FFI.Other     -> Just Other
                                    FFI.NoEvent   -> Just NoEvent
-                                   FFI.ProcStart -> Just . ProcStart . fromInteger $ pid
+                                   FFI.ProcStart -> Just . ProcStart . fromIntegral $ pid
                                    FFI.ProcEnd   -> Just . ProcEnd . fromInteger $ -1 -- TODO: need to get the actual exit code
         in do
             -- TODO: fix line length

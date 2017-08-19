@@ -6,8 +6,10 @@ DbMonad,
 mkDbData,
 runDbMonad,
 insertProcEventType,
+insertProcEventTypeByName,
 insertProcEvents,
 insertTickResolution,
+selectTickTypeByResolution,
 commitDb,
 rollbackDb,
 callbackAsIO,
@@ -15,10 +17,12 @@ bracketOnErrorM_
 )
 where
 
+import TimeTracker.ProcEventType
 import TimeTracker.Interface (ProcEventData(..), procEventDataToInt, EventCallback)
 import qualified TimeTracker.Config.ConfigTypes as TimeTracker
 import Database.HDBC
 import Database.HDBC.Sqlite3
+import Data.Convertible.Base (Convertible)
 import Data.Maybe (isJust)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
@@ -39,7 +43,8 @@ data DbData =
             insertTickResolutionStmt :: Statement,
 
             selectProcEventTypeStmt :: Statement,
-            selectAllProcEventTypesStmt :: Statement
+            selectAllProcEventTypesStmt :: Statement,
+            selectProcEventTypeStmtById :: Statement
         }
 
 type DbMonad a = ReaderT DbData IO a
@@ -79,6 +84,12 @@ rollbackDb = do
     DbData { connection = c }  <- ask
     liftIO . rollback $ c
 
+quickQueryDb' :: String -> [SqlValue] -> DbMonad [[SqlValue]]
+quickQueryDb' stmt vals = do
+    DbData { connection = c }  <- ask
+    liftIO . quickQuery' c stmt $ vals
+
+
 openConnection :: TimeTracker.ConnectionInfo -> IO Connection
 openConnection (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
 
@@ -102,15 +113,10 @@ setupDbMonad =  setupProcEventTypes
             setupProcEventTypes = do
                 eventTypes <- Set.fromList . fmap procEventTypeName <$> selectAllProcEventTypes
                 when (null eventTypes) $ do
-                    mapM_ insertProcEventType startingProcEventNames
+                    mapM_ insertProcEventTypeByName startingProcEventNames
                     commitDb
 
         
-data ProcEventType = ProcEventType {
-                    procEventTypeName :: String,
-                    procEventTypeId   :: Int
-                   }
-                   deriving (Eq)
 
 -- requires Rank2Types
 type StatementFunction = forall s . IConnection s => StateT s IO Statement
@@ -151,16 +157,26 @@ insertTickResolutionStmt' = sprepare "INSERT INTO TickResolutions(id, resolution
 selectProcEventTypeStmt' :: StatementFunction
 selectProcEventTypeStmt' = sprepare "SELECT * FROM ProcEventTypes WHERE name=?"
 
+selectProcEventTypeStmtById' :: StatementFunction
+selectProcEventTypeStmtById' = sprepare "SELECT * FROM ProcEventTypes WHERE id=?"
+
 selectAllProcEventTypesStmt' :: StatementFunction
 selectAllProcEventTypesStmt' = sprepare "SELECT * FROM ProcEventTypes"
 
 -- TODO: instead of returning Integers, have a better way to check errors
 
-insertProcEventType :: String -> DbMonad Integer
-insertProcEventType s =
-        (insertProcEventTypeStmt <$> ask) >>= (liftIO . (\stmt -> execute stmt s'))
+-- | inserts a proc event type and returns the generated ID
+insertProcEventTypeByName :: String -> DbMonad (Maybe Int)
+insertProcEventTypeByName s = do
+        stmt <- insertProcEventTypeStmt <$> ask
+        _ <- liftIO . execute stmt $ s'
+        liftIO $ fmap fromSql . (headMay =<<) <$> fetchRow stmt
+
         where s' :: [SqlValue]
               s' = return . toSql $ s
+
+insertProcEventType :: ProcEventType -> DbMonad (Maybe Int)
+insertProcEventType = insertProcEventTypeByName . procEventTypeName
 
 insertProcEvents :: [(ProcEventData, String)] -> DbMonad ()
 insertProcEvents xs = (insertProcEventStmt <$> ask) >>= \stmt -> (liftIO $ executeMany stmt xs')
@@ -168,19 +184,34 @@ insertProcEvents xs = (insertProcEventStmt <$> ask) >>= \stmt -> (liftIO $ execu
           xs' = map conv xs
 
 -- | the ID is a foreign key into ProcEventType
-insertTickResolution :: Integer -> Integer -> DbMonad Integer
-insertTickResolution procEventTypeId resolutionMillis = 
-        (insertTickResolutionStmt <$> ask) >>= (liftIO . (\stmt -> execute stmt values))
+insertTickResolution :: Int -> Int -> DbMonad Int
+insertTickResolution resolutionMillis procEventTypeId  = 
+        (insertTickResolutionStmt <$> ask) >>= (liftIO . fmap fromInteger . (\stmt -> execute stmt values))
     where values = [toSql procEventTypeId, toSql resolutionMillis]
+
+selectSingleRow :: Convertible SqlValue a => (DbData -> Statement) -> [SqlValue] -> DbMonad (Maybe a)
+selectSingleRow sel params = (sel <$> ask) >>= 
+                            liftIO . \s -> (execute s params >> 
+                                           fetchRow s >>= 
+                                           return . fmap fromSql . (headMay =<<))
+
+
+selectTickTypeByResolution :: Int -> DbMonad (Maybe Int)
+selectTickTypeByResolution r =
+        fmap fromSql . headMay . join <$> quickQueryDb' "SELECT ProcEventTypes.id FROM TickResolutions LEFT JOIN ProcEventTypes ON id=TickResolutions.id WHERE resolutionMillis=?" r'
+        where r' = [toSql r]
 
 -- | search for a ProcEventType by name and return the corresponding ID if
 -- it exists
-selectProcEventType :: String -> DbMonad (Maybe Integer)
+selectProcEventType :: String -> DbMonad (Maybe Int)
 selectProcEventType name = (selectProcEventTypeStmt <$> ask) >>= 
                             liftIO . \s -> (execute s name' >> 
                                            fetchRow s >>= 
                                            return . fmap fromSql . (headMay =<<))
                 where name' = [toSql name]
+
+--selectProcEventTypeById :: Int -> DbMonad (Maybe String)
+--selectProcEventTypeById evId = (selectProcEventTypeById <$> ask) >>=
 
 selectAllProcEventTypes :: DbMonad [ProcEventType]
 selectAllProcEventTypes = ((selectAllProcEventTypesStmt <$> ask) >>= \s -> 
@@ -213,6 +244,7 @@ mkDbData c conf = do
 
             selProcEventTypeStmt    <- selectProcEventTypeStmt'
             selAllProcEventTypesStmt<- selectAllProcEventTypesStmt'
+            selProcEventTypeById    <- selectProcEventTypeStmtById'
             c                       <- get
 
             return $ DbData { connection = c,
@@ -221,7 +253,8 @@ mkDbData c conf = do
                             insertProcEventStmt = insProcEventStmt,
                             insertTickResolutionStmt = insTickResolutionStmt,
                             selectProcEventTypeStmt  = selProcEventTypeStmt,
-                            selectAllProcEventTypesStmt  = selAllProcEventTypesStmt
+                            selectAllProcEventTypesStmt  = selAllProcEventTypesStmt,
+                            selectProcEventTypeStmtById = selProcEventTypeById
                             }
 
 
@@ -232,7 +265,7 @@ cleanupDbMonad = do
         liftIO . commit $ c
         liftIO . disconnect $ c
 
-callbackAsIO :: (Integer -> Integer -> String -> DbMonad ()) -> DbMonad EventCallback
+callbackAsIO :: (Int -> Int -> String -> DbMonad ()) -> DbMonad EventCallback
 callbackAsIO callback = do
         dbData <- ask 
         return $ \a b c -> runDbMonadWithState (callback a b c) dbData

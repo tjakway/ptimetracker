@@ -2,6 +2,7 @@
 module TimeTracker.Interface where
 
 import qualified TimeTracker.FFI as FFI
+import TimeTracker.ProcEventType
 import TimeTracker.Types
 import Foreign.C.Types
 import Foreign.C.String
@@ -11,7 +12,7 @@ import Control.Monad.State.Strict
 
 -- a haskell-friendly version of CEventCallback, with the C types
 -- marshalled
-type EventCallback = Integer -> Integer -> String -> IO ()
+type EventCallback = Int -> Int -> String -> IO ()
 
 -- Automatically handles marshalling of the passed name
 newEventCallback :: EventCallback -> ProgramLoggerM FFI.CEventCallbackFunPtr
@@ -23,7 +24,7 @@ newEventCallback f = do
     return fptr
 
     where f' :: (CInt -> CInt -> CString -> IO ())
-          f' a b c = peekCString c >>= f (toInteger a) (toInteger b)
+          f' a b c = peekCString c >>= f (fromIntegral a) (fromIntegral b)
 
 newStopListeningCallback :: FFI.StopListeningCallback -> 
                             ProgramLoggerM FFI.StopListeningCallbackFunPtr
@@ -82,27 +83,33 @@ listenUntilElapsed t = do
 
 -- **** cnMsg functions ****
 
+type TickEventId = Int
+
 data ProcEventData = Other
                    | NoEvent
                    | ProcStart FFI.PidT 
                    | ProcEnd FFI.ExitCode
+                   | Tick TickEventId
+
+isTickEvent :: ProcEventData -> Bool
+isTickEvent (Tick _) = True
+isTickEvent _ = False
+
+typeOfProcEventData :: ProcEventData -> ProcEventType
+typeOfProcEventData Other         = ProcEventType "Other"   1
+typeOfProcEventData NoEvent       = ProcEventType "NoEvent" 2
+typeOfProcEventData (ProcStart _) = ProcEventType "ProcStart" 3
+typeOfProcEventData (ProcEnd _)   = ProcEventType "ProcStart" 4
+typeOfProcEventData (Tick tickId) = ProcEventType "Tick" (4 + tickId)
 
 -- explicit show instance to ignore constructor args
 instance Show ProcEventData where
-        show Other = "Other"
-        show NoEvent = "NoEvent"
-        show (ProcStart _) = "ProcStart"
-        show (ProcEnd _) = "ProcEnd"
+        show = procEventTypeName . typeOfProcEventData
 
 -- can't make it an enum because it has non-nullary constructors
-
--- this is just fromEnum
+-- (this is just fromEnum)
 procEventDataToInt :: ProcEventData -> Int
-procEventDataToInt x = case x of
-                           Other -> 1
-                           NoEvent -> 2
-                           ProcStart _ -> 3
-                           ProcEnd _ -> 4
+procEventDataToInt = procEventTypeId . typeOfProcEventData
 
 getProcEventData :: Ptr () -> IO (Maybe ProcEventData)
 getProcEventData cnHdr

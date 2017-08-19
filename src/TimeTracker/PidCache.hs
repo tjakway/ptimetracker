@@ -21,11 +21,11 @@ initPidCache = newIORef Map.empty
 -- know the program name
 withPidCache :: IORef PidCache -> EventCallback -> EventCallback
 withPidCache cache f = \pid eventCode progName ->
-    let eventCode' = FFI.intToProcMatchEventType (fromInteger eventCode)
+    let eventCode' = FFI.intToProcMatchEventType (fromIntegral eventCode)
                                         -- unknown event type, skip the
                                         -- cache
         f' = f pid eventCode
-        pid' = fromInteger pid
+        pid' = fromIntegral pid
         isProcStartOrTick e = e == FFI.ProcStart || 
                                 (e /= FFI.ProcEnd &&
                                  e /= FFI.Other   &&
