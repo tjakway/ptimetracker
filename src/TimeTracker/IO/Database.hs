@@ -9,6 +9,7 @@ insertProcEventType,
 insertProcEvents,
 insertTickResolution,
 commitDb,
+rollbackDb,
 callbackAsIO,
 bracketOnErrorM_
 )
@@ -72,6 +73,11 @@ commitDb :: DbMonad ()
 commitDb = do
     DbData { connection = c }  <- ask
     liftIO . commit $ c
+
+rollbackDb :: DbMonad ()
+rollbackDb = do
+    DbData { connection = c }  <- ask
+    liftIO . rollback $ c
 
 openConnection :: TimeTracker.ConnectionInfo -> IO Connection
 openConnection (TimeTracker.Sqlite path) = connectSqlite3 path -- TODO: postgres
