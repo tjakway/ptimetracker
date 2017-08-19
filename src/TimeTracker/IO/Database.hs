@@ -21,8 +21,10 @@ import Data.Maybe (isJust)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import Safe
+import Control.Monad (liftM3)
 import Control.Monad.Reader
 import Control.Monad.State.Strict
+import Control.Exception (bracketOnError)
 
 data DbData = 
     forall a . IConnection a => 
@@ -227,3 +229,23 @@ callbackAsIO :: (Integer -> Integer -> String -> DbMonad ()) -> DbMonad EventCal
 callbackAsIO callback = do
         dbData <- ask 
         return $ \a b c -> runDbMonadWithState (callback a b c) dbData
+
+
+--x :: Monad m =>
+--     m (IO a) -> m (a -> IO b) -> m (a -> IO c) -> m (IO c)
+
+
+bracketOnErrorM_ :: DbMonad a -> DbMonad b -> DbMonad c -> DbMonad c
+bracketOnErrorM_ a b c = (liftM3 bracketOnError) a' b' c' >>= liftIO
+    where 
+          run' :: DbMonad a -> DbMonad (IO a)
+          run' x = runDbMonadWithState x <$> ask
+
+          run2' :: DbMonad b -> DbMonad (a -> IO b)
+          run2' f = do
+              s <- ask
+              return $ \_ -> runDbMonadWithState f s
+
+          a'    = run' a
+          b'    = run2' b
+          c'    = run2' c
