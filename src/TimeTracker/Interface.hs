@@ -100,7 +100,7 @@ typeOfProcEventData Other         = ProcEventType "Other"   1
 typeOfProcEventData NoEvent       = ProcEventType "NoEvent" 2
 typeOfProcEventData (ProcStart _) = ProcEventType "ProcStart" 3
 typeOfProcEventData (ProcEnd _)   = ProcEventType "ProcStart" 4
-typeOfProcEventData (Tick tickId) = ProcEventType "Tick" (4 + tickId)
+typeOfProcEventData (Tick eventId) = ProcEventType "Tick" eventId
 
 -- explicit show instance to ignore constructor args
 instance Show ProcEventData where
