@@ -231,8 +231,9 @@ selectSingleRow sel params = (sel <$> ask) >>=
 
 selectTickTypeByResolution :: Int -> DbMonad (Maybe Int)
 selectTickTypeByResolution r =
-        fmap fromSql . headMay . join <$> quickQueryDb' "SELECT ProcEventTypes.id FROM TickResolutions LEFT JOIN ProcEventTypes ON id=TickResolutions.id WHERE resolutionMillis=?" r'
+        fmap fromSql . headMay . join <$> quickQueryDb' queryStr r'
         where r' = [toSql r]
+              queryStr = "SELECT ProcEventTypes.id FROM TickResolutions LEFT JOIN ProcEventTypes ON TickResolutions.id=ProcEventTypes.id WHERE TickResolutions.resolutionMillis=?"
 
 -- | search for a ProcEventType by name and return the corresponding ID if
 -- it exists
