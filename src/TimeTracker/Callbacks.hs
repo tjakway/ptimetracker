@@ -35,8 +35,8 @@ logCallback logError pid procEventTypeInt progName =
             case procEventData of Nothing -> liftIO $ logError ("Received unknown event type from progName" ++ progName)
                                   Just ev -> insertProcEvents [(ev, progName)] >> commitDb
 
-dbMonadAction :: (String -> IO ()) -> DbMonad ()
-dbMonadAction logError = 
+dbMonadAction :: Int -> (String -> IO ()) -> DbMonad ExitCode
+dbMonadAction tickResolution logError = 
         let procRegex = ".*"
             cwdRegex = ".*"
             procM x = addProcMatcher x procRegex False cwdRegex
@@ -48,8 +48,19 @@ dbMonadAction logError =
             logCallback' :: IORef PidCache -> DbMonad (EventCallback)
             logCallback' ref = callbackAsIO (logCallback logError) >>= liftIO . return . withPidCache ref
 
-        in (liftIO initPidCache >>= logCallback') >>= \c ->
-            liftIO $ do
-                let programLoggerAction = procM c >> listenForever
-                res <- runProgramLogger programLoggerAction
-                putStrLn $ "res = " ++ (show res)
+        in do
+            cacheRef <- liftIO initPidCache 
+            callback <- logCallback' cacheRef
+
+            -- | it's OK if we launch the tick recording thread early
+            -- because if the PID cache is empty then startRecordingTicks will
+            -- have no effect
+            -- (PidCache updates are atomic)
+            maybeThreadId <- startRecordingTicks cacheRef tickResolution 
+
+            let logTickError = logError "Error while launching tick recording thread"
+
+            case maybeThreadId of Nothing -> logTickError >> return (ExitFailure -1)
+                                  Just threadId -> do
+                        let programLoggerAction = procM callback >> listenForever
+                        liftIO . runProgramLogger $ programLoggerAction
