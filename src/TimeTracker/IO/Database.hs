@@ -208,7 +208,7 @@ insertTickResolution resolutionMillis procEventTypeId  =
 tickEventName :: String
 tickEventName = "Tick"
 
-data TickException = TickException
+data TickException = TickException String
     deriving (Show, Typeable)
 
 instance Exception TickException
@@ -221,7 +221,7 @@ insertTickTypeIfNotExists resolution = do
                        Nothing -> do
                               maybeTypeId <- insertProcEventTypeByName tickEventName
                               case maybeTypeId of Just typeId -> insertTickResolution resolution typeId >> return typeId
-                                                  Nothing -> liftIO . throwIO $ TickException
+                                                  Nothing -> liftIO . throwIO . TickException $ "Could not find or insert tick ID " ++ show tickId
 
 selectSingleRow :: Convertible SqlValue a => (DbData -> Statement) -> [SqlValue] -> DbMonad (Maybe a)
 selectSingleRow sel params = (sel <$> ask) >>= 
