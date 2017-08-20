@@ -1,5 +1,6 @@
 * break up TimeTracker.IO.Database into multiple files
 
+* have setupDbMonad/runDbMonad do hslogger setup (and make sure it applies to the "DbMonad" logger!)
 * add tick resolution -> DbData
 
 -----------------------
