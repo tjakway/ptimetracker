@@ -2,11 +2,10 @@
 module TimeTracker.IO.Ticks 
 (
 startRecordingTicks
-)where
+) where
 
 import Control.Monad.Reader
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad (liftM)
 import Control.Concurrent
 import qualified Data.Map.Strict as Map
 import System.Directory
