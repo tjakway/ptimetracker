@@ -148,7 +148,7 @@ createTablesString =  "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY, \
                                     \ name TEXT NOT NULL); \
                                 \ CREATE TABLE IF NOT EXISTS ProcEvents( \
-                                    \ id INTEGER PRIMARY KEY, \
+                                    \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
                                     \ eventType INTEGER NOT NULL, \
                                     \ evTime TEXT DEFAULT CURRENT_TIMESTAMP, \
                                     \ programName TEXT NOT NULL, \
@@ -183,13 +183,13 @@ selectAllProcEventTypesStmt' = sprepare "SELECT * FROM ProcEventTypes"
 
 -- | inserts a proc event type and returns the generated ID
 insertProcEventTypeByName :: String -> DbMonad (Maybe Int)
-insertProcEventTypeByName s = do
+insertProcEventTypeByName name = do
         stmt <- insertProcEventTypeStmt <$> ask
-        _ <- liftIO . execute stmt $ s'
-        liftIO $ fmap fromSql . (headMay =<<) <$> fetchRow stmt
+        _ <- liftIO . execute stmt $ name'
+        selectProcEventType name
 
-        where s' :: [SqlValue]
-              s' = return . toSql $ s
+        where name' :: [SqlValue]
+              name' = return . toSql $ name
 
 insertProcEventType :: ProcEventType -> DbMonad (Maybe Int)
 insertProcEventType = insertProcEventTypeByName . procEventTypeName
@@ -243,7 +243,8 @@ selectProcEventType name = (selectProcEventTypeStmt <$> ask) >>=
                             liftIO . \s -> (execute s name' >> 
                                            fetchRow s >>= 
                                            return . fmap fromSql . (headMay =<<))
-                where name' = [toSql name]
+                where name' = return . toSql $ name
+
 
 --selectProcEventTypeById :: Int -> DbMonad (Maybe String)
 --selectProcEventTypeById evId = (selectProcEventTypeById <$> ask) >>=
