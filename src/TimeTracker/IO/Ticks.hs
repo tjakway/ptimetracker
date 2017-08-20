@@ -23,7 +23,8 @@ procDirExists = liftIO . doesDirectoryExist . procDir
     where procDir :: FFI.PidT -> FilePath
           procDir = mappend "/proc/" . show
 
-startRecordingTicks :: IORef PidCache -> Int -> DbMonad ThreadId
+startRecordingTicks :: IORef PidCache -> Int -> DbMonad (Maybe ThreadId)
+startRecordingTicks _ 0 = return Nothing
 startRecordingTicks cacheRef resolution = do
         let resMicroseconds = resolution * 1000
         tickType <- typeOfProcEventData . Tick <$> insertTickTypeIfNotExists resolution
@@ -35,7 +36,7 @@ startRecordingTicks cacheRef resolution = do
                 asyncAction
 
         s <- ask
-        liftIO . forkIO . runDbMonadWithState asyncAction $ s
+        liftIO . fmap Just . forkIO . runDbMonadWithState asyncAction $ s
 
 
 recordTicks :: ProcEventType -> PidCache -> DbMonad ()

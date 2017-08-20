@@ -6,8 +6,10 @@ import Control.Monad.IO.Class (liftIO)
 import TimeTracker.Interface
 import TimeTracker.Types
 import TimeTracker.IO.Database
+import TimeTracker.IO.Ticks
 import TimeTracker.PidCache
 import qualified TimeTracker.FFI as FFI
+import System.Exit
 
 
 -- | run a certain number of times
@@ -23,8 +25,8 @@ countCallback limit = do
             return continueCallback'
 
 
-logCallback :: (String -> IO ()) -> Int -> Int -> String -> DbMonad ()
-logCallback logError pid procEventTypeInt progName = 
+logCallback :: Int -> Int -> String -> DbMonad ()
+logCallback pid procEventTypeInt progName = 
         let procEventData = FFI.intToProcMatchEventType (fromIntegral procEventTypeInt) >>= 
                    \x -> case x of FFI.Other     -> Just Other
                                    FFI.NoEvent   -> Just NoEvent
@@ -32,11 +34,11 @@ logCallback logError pid procEventTypeInt progName =
                                    FFI.ProcEnd   -> Just . ProcEnd . fromInteger $ -1 -- TODO: need to get the actual exit code
         in do
             -- TODO: fix line length
-            case procEventData of Nothing -> liftIO $ logError ("Received unknown event type from progName" ++ progName)
+            case procEventData of Nothing -> logError ("Received unknown event type from progName" ++ progName)
                                   Just ev -> insertProcEvents [(ev, progName)] >> commitDb
 
-dbMonadAction :: Int -> (String -> IO ()) -> DbMonad ExitCode
-dbMonadAction tickResolution logError = 
+dbMonadAction :: Int -> DbMonad ExitCode
+dbMonadAction tickResolution = 
         let procRegex = ".*"
             cwdRegex = ".*"
             procM x = addProcMatcher x procRegex False cwdRegex
@@ -46,7 +48,7 @@ dbMonadAction tickResolution logError =
             -- (i.e. PROC_FAILURE events where we can't find the program
             -- name and therefore don't care about)
             logCallback' :: IORef PidCache -> DbMonad (EventCallback)
-            logCallback' ref = callbackAsIO (logCallback logError) >>= liftIO . return . withPidCache ref
+            logCallback' ref = callbackAsIO logCallback >>= liftIO . return . withPidCache ref
 
         in do
             cacheRef <- liftIO initPidCache 
@@ -60,7 +62,10 @@ dbMonadAction tickResolution logError =
 
             let logTickError = logError "Error while launching tick recording thread"
 
-            case maybeThreadId of Nothing -> logTickError >> return (ExitFailure -1)
+            case maybeThreadId of Nothing -> logTickError >> return (ExitFailure (-1))
                                   Just threadId -> do
-                        let programLoggerAction = procM callback >> listenForever
-                        liftIO . runProgramLogger $ programLoggerAction
+                                    let programLoggerAction = procM callback >> listenForever
+                                    res <- liftIO . runProgramLogger $ programLoggerAction
+                                    return $ if res == 0 
+                                                 then ExitSuccess 
+                                                 else ExitFailure (fromIntegral res)

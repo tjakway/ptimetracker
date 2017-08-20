@@ -4,6 +4,7 @@ module TimeTracker.IO.Database
 (
 DbMonad,
 logWarning,
+logError,
 mkDbData,
 runDbMonad,
 runDbMonadWithState,
@@ -55,8 +56,14 @@ data DbData =
 
 type DbMonad a = ReaderT DbData IO a
 
+loggerName :: String
+loggerName = "DbMonad"
+
 logWarning :: String -> DbMonad ()
-logWarning = liftIO . warningM "DbMonad"
+logWarning = liftIO . warningM loggerName
+
+logError :: String -> DbMonad ()
+logError = liftIO . errorM loggerName
 
 -- | Setup all resources needed for the monadic computation then execute it
 -- note: this is expensive, don't call often

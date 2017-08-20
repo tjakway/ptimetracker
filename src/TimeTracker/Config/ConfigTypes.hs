@@ -9,7 +9,7 @@ data ConnectionInfo = Sqlite FilePath
 data Config = Config {
               loggingPriority :: Priority,
               connectionInfo :: ConnectionInfo,
-              ticksEnabled :: Bool
+              tickResolutionMillis :: Int
             }
 
 isSqlite :: ConnectionInfo -> Bool

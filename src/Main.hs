@@ -3,18 +3,11 @@ module Main where
 
 import System.IO
 import System.Exit
-import qualified System.Log.Logger as Logger
 import Control.Monad (when)
 import System.Posix.User
 import TimeTracker.IO.Database
 import TimeTracker.Config.ConfigTypes
 import TimeTracker.Callbacks
-
-logDebug :: String -> IO ()
-logDebug = Logger.debugM "Main"
-
-logError :: String -> IO ()
-logError = Logger.errorM "Main"
 
 exitIfNotRoot :: IO ()
 exitIfNotRoot = do
@@ -28,5 +21,7 @@ main :: IO ()
 main = do
         exitIfNotRoot
         putStrLn "Haskell main started."
-        let conf = Config {connectionInfo = Sqlite "test.db", ticksEnabled = True }
-        runDbMonad conf (dbMonadAction logError)
+        let conf = Config {connectionInfo = Sqlite "test.db", tickResolutionMillis = 2000 }
+            -- TODO: add tick resolution to DbData
+        res <- runDbMonad conf (dbMonadAction . tickResolutionMillis $ conf)
+        exitWith res
