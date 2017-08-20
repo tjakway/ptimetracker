@@ -1,12 +1,16 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module TimeTracker.IO.Ticks where
 
+import Control.Monad.Reader
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad (liftM)
+import Control.Concurrent
 import qualified Data.Map.Strict as Map
 import System.Directory
+import Data.IORef
 import TimeTracker.ProcEventType
 import TimeTracker.IO.Database
-import TimeTracker.Interface (ProcEventData(..))
+import TimeTracker.Interface (ProcEventData(..), typeOfProcEventData)
 import qualified TimeTracker.FFI as FFI
 import TimeTracker.PidCache
 
@@ -16,6 +20,21 @@ procDirExists :: FFI.PidT -> DbMonad Bool
 procDirExists = liftIO . doesDirectoryExist . procDir
     where procDir :: FFI.PidT -> FilePath
           procDir = mappend "/proc/" . show
+
+startRecordingTicks :: IORef PidCache -> Int -> DbMonad ThreadId
+startRecordingTicks cacheRef resolution = do
+        let resMicroseconds = resolution * 1000
+        tickType <- typeOfProcEventData . Tick <$> insertTickTypeIfNotExists resolution
+
+        let asyncAction = do
+                liftIO . threadDelay $ resMicroseconds
+                cache <- liftIO . readIORef $ cacheRef
+                recordTicks tickType cache
+                asyncAction
+
+        s <- ask
+        liftIO . forkIO . runDbMonadWithState asyncAction $ s
+
 
 recordTicks :: ProcEventType -> PidCache -> DbMonad ()
 recordTicks evType cache = bracketOnErrorM_ (return ()) rollbackDb rec'

@@ -8,7 +8,6 @@ import Control.Monad (when)
 import System.Posix.User
 import TimeTracker.IO.Database
 import TimeTracker.Config.ConfigTypes
-import TimeTracker.PidCache
 import TimeTracker.Callbacks
 
 logDebug :: String -> IO ()

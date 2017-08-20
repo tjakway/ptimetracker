@@ -6,10 +6,12 @@ DbMonad,
 logWarning,
 mkDbData,
 runDbMonad,
+runDbMonadWithState,
 insertProcEventType,
 insertProcEventTypeByName,
 insertProcEvents,
 insertTickResolution,
+insertTickTypeIfNotExists,
 selectTickTypeByResolution,
 commitDb,
 rollbackDb,
@@ -67,7 +69,6 @@ runDbMonad config s = do
         runReaderT s' dbData
     where s' = setupDbMonad >> s >>= \x -> (cleanupDbMonad >> return x)
 
--- | for use within this module (not exported)
 -- convenient for subcomputations in the DbMonad
 runDbMonadWithState :: DbMonad a -> DbData -> IO a
 runDbMonadWithState = runReaderT
