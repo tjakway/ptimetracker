@@ -1,5 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module TimeTracker.IO.Ticks where
+module TimeTracker.IO.Ticks 
+(
+startRecordingTicks
+)where
 
 import Control.Monad.Reader
 import Control.Monad.IO.Class (liftIO)
