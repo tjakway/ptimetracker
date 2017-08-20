@@ -1,5 +1,7 @@
 * break up TimeTracker.IO.Database into multiple files
 
+* add tick resolution -> DbData
+
 -----------------------
 
 
