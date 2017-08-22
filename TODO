@@ -10,3 +10,4 @@
 
 
 
+* need better transaction handling/data consistency to avoid corruption
