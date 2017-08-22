@@ -148,7 +148,7 @@ createTablesString =  "CREATE TABLE IF NOT EXISTS ProcEventTypes( \
                                     \ id INTEGER PRIMARY KEY, \
                                     \ name TEXT NOT NULL); \
                                 \ CREATE TABLE IF NOT EXISTS ProcEvents( \
-                                    \ id INTEGER PRIMARY KEY AUTOINCREMENT, \
+                                    \ id INTEGER PRIMARY KEY, \
                                     \ eventType INTEGER NOT NULL, \
                                     \ evTime TEXT DEFAULT CURRENT_TIMESTAMP, \
                                     \ programName TEXT NOT NULL, \
