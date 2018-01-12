@@ -1,1 +1,4 @@
 License: GNU GPL v3
+
+TODO:
+* as part of a rule (i.e. when a program matches the passed regex) exec a shell command
